@@ -91,6 +91,11 @@ POST /api/github/parse-pr-url
 ```txt
 GET /api/github/pull-request?owner=facebook&repo=react&pullNumber=123
 ```
+### 获取 PR Changed Files
+
+```txt
+GET /api/github/pull-request/files?owner=facebook&repo=react&pullNumber=123
+```
 
 ## AI Review Pipeline 设计
 
