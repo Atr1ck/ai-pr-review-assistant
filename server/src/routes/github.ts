@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { parsePRUrl } from '../github/parsePullRequestUrl.js';
 import { getPullRequestMetadata } from '../github/getPullRequestMetadata.js';
+import { getPullRequestFiles } from '../github/getPullRequestFiles.js';
 
 export const githubRouter = Router();
 
@@ -51,4 +52,39 @@ githubRouter.get('/pull-request',async (req, res) => {
             error: error instanceof Error ? error.message : 'Failed to fetch pull request metadata',
         });
     }
+});
+
+githubRouter.get('/pull-request/files', async (req, res) => {
+  const owner = req.query.owner;
+  const repo = req.query.repo;
+  const pullNumber = Number(req.query.pullNumber);
+
+  if (
+    typeof owner !== 'string' ||
+    typeof repo !== 'string' ||
+    !Number.isInteger(pullNumber) ||
+    pullNumber <= 0
+  ) {
+    res.status(400).json({
+      error: 'owner, repo and pullNumber are required',
+    });
+    return;
+  }
+
+  try {
+    const files = await getPullRequestFiles({
+      owner,
+      repo,
+      pullNumber,
+    });
+
+    res.json(files);
+  } catch (error) {
+    res.status(502).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch pull request files',
+    });
+  }
 });
