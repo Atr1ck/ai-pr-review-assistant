@@ -35,7 +35,26 @@ shared       前后端共享类型
 ```
 ## 本地启动
 
-待后续PR补充
+安装依赖:
+
+```bash
+npm install
+```
+启动前端:
+
+```bash
+npm run dev:web
+```
+
+默认访问： 
+
+http://localhost:5173
+
+构建检查：
+
+```bash
+npm run build
+```
 
 ## AI Review Pipeline 设计
 
