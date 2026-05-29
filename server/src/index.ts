@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', healthRouter);
-app.use('/api', githubRouter);
+app.use('/api/github', githubRouter);
 
 const port = Number(process.env.PORT ?? 3001);
 

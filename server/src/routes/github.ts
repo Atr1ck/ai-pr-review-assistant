@@ -4,8 +4,8 @@ import { parsePRUrl } from '../github/parsePullRequestUrl.js';
 export const githubRouter = Router();
 
 githubRouter.post('/parse-pr-url', (req, res) => {
-    const { url } = req.body?.url;
-
+    const url = req.body?.url;
+    
     if (typeof url !== 'string' || url.trim() === '') {
         res.status(400).json({
             error: 'PR URL is required and must be a non-empty string',
