@@ -35,4 +35,4 @@ export function parsePRUrl(url: string): ParsedPRInfo {
         repo, 
         prNumber 
     };
-} 
+}
