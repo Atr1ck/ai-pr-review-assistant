@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
-import {parsePRUrl} from './api/github';
-import type { ParsedPRInfo } from './types/github';
+import { parsePRUrl, fetchPRMetadata} from './api/github';
+import type { ParsedPRInfo, PullRequestMetadata } from './types/github';
 
 const mockFiles = [
   'server/src/auth/middleware.ts',
@@ -21,18 +21,25 @@ const pipelineSteps = [
 function App() {
   const [prUrl, setprUrl] = useState('');
   const [parsedInfo, setParsedInfo] = useState<ParsedPRInfo | null>(null);
+  const [prMetadata, setPrMetadata] = useState<PullRequestMetadata | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isParsing, setIsparsing] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     setError(null);
     setParsedInfo(null);
+    setPrMetadata(null);
+    setIsparsing(true);
+    setIsDescriptionExpanded(false);
 
     try {
       const result = await parsePRUrl(prUrl);
       setParsedInfo(result);
 
+      const metadata = await fetchPRMetadata(result);
+      setPrMetadata(metadata);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse PR URL');
     } finally {
@@ -83,16 +90,98 @@ function App() {
         <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="mb-4 text-lg font-semibold">Pull Request</h2>
 
-          {parsedInfo ? (
-            <div className="space-y-2 rounded-md bg-green-50 p-3 text-sm text-green-700">
-              <div><strong>Owner:</strong> {parsedInfo.owner}</div>
-              <div><strong>Repo:</strong> {parsedInfo.repo}</div>
-              <div><strong>PR Number:</strong> {parsedInfo.prNumber}</div>
+          {prMetadata && parsedInfo ? (
+            <div className="space-y-4">
+              <div>
+                <a
+                  href={prMetadata.htmlUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  {parsedInfo.owner}/{parsedInfo.repo} #{parsedInfo.prNumber}
+                </a>
+                <h3 className="mt-2 text-base font-semibold text-slate-900">
+                  {prMetadata.title}
+                </h3>
+              </div>
+
+              <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">State</span>
+                  <span className="font-medium text-slate-900">{prMetadata.state}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">Author</span>
+                  <span className="font-medium text-slate-900">
+                    {prMetadata.author?.login ?? 'Unknown'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">Base</span>
+                  <span className="max-w-[160px] truncate font-medium text-slate-900">
+                    {prMetadata.baseBranch}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">Head</span>
+                  <span className="max-w-[160px] truncate font-medium text-slate-900">
+                    {prMetadata.headBranch}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                <div className="rounded-md bg-emerald-50 p-2">
+                  <div className="font-semibold text-emerald-700">
+                    +{prMetadata.additions}
+                  </div>
+                  <div className="text-xs text-slate-500">Additions</div>
+                </div>
+                <div className="rounded-md bg-red-50 p-2">
+                  <div className="font-semibold text-red-700">
+                    -{prMetadata.deletions}
+                  </div>
+                  <div className="text-xs text-slate-500">Deletions</div>
+                </div>
+                <div className="rounded-md bg-blue-50 p-2">
+                  <div className="font-semibold text-blue-700">
+                    {prMetadata.changedFiles}
+                  </div>
+                  <div className="text-xs text-slate-500">Files</div>
+                </div>
+              </div>
+
+              {prMetadata.description ? (
+                <div>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <h3 className="text-sm font-semibold text-slate-700">
+                        Description
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsDescriptionExpanded((value) => !value)}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                      >
+                        {isDescriptionExpanded ? '收回' : '展开'}
+                      </button>
+                    </div>
+
+                    <p
+                      className={[
+                        'whitespace-pre-wrap text-sm leading-6 text-slate-600',
+                        isDescriptionExpanded ? '' : 'line-clamp-6',
+                      ].join(' ')}
+                    >
+                      {prMetadata.description}
+                    </p>
+                  </div>
+                ) : null}
             </div>
           ) : (
             <div className="grid gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              <strong className="text-slate-800">暂无已加载的 PR</strong>
-              <span>请输入 GitHub PR URL 开始分析。</span>
+              <strong className="text-slate-800">No PR loaded</strong>
+              <span>Enter a GitHub PR URL to start analysis.</span>
             </div>
           )}
 
