@@ -50,6 +50,18 @@ npm run dev:web
 
 http://localhost:5173
 
+后端启动
+
+启动 Express 服务：
+
+```bash
+npm run dev:server
+```
+
+默认服务地址
+
+http://localhost:3001
+
 构建检查：
 
 ```bash
