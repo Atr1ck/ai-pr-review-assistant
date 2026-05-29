@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "npm run dev -w apps/web",
     "dev:web": "npm run dev -w apps/web",
-    "lint": "echo \"lint will be added in later PRs\""
+    "build": "npm run build -w apps/web"
   },
   "workspaces": [
     "apps/web",
@@ -24,7 +24,5 @@
     "shared"
   ],
   "dependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "tailwindcss": "^4.0.0"
   }
 }
