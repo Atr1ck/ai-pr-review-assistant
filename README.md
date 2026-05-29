@@ -62,6 +62,10 @@ npm run dev:server
 
 http://localhost:3001
 
+如果需要修改后端地址，可以在 apps/web/.env 中配置：
+
+VITE_API_BASE_URL=
+
 构建检查：
 
 ```bash
