@@ -68,6 +68,20 @@ http://localhost:3001
 npm run build
 ```
 
+## 当前API
+
+### 健康检查
+
+```txt
+GET /api/health
+```
+
+### 解析Github PR URL
+
+```txt
+POST /api/github/parse-pr-url
+```
+
 ## AI Review Pipeline 设计
 
 计划流程：

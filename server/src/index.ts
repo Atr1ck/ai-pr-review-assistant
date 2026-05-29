@@ -2,6 +2,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { healthRouter } from './routes/health.js';
+import { githubRouter } from './routes/github.js';
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', healthRouter);
+app.use('/api/github', githubRouter);
 
 const port = Number(process.env.PORT ?? 3001);
 
