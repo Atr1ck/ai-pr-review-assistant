@@ -14,7 +14,8 @@
   "author": "Atr1ck",
   "type": "commonjs",
   "scripts": {
-    "dev": "echo \"web and server dev scripts will be added in later PRs\"",
+    "dev": "npm run dev -w apps/web",
+    "dev:web": "npm run dev -w apps/web",
     "lint": "echo \"lint will be added in later PRs\""
   },
   "workspaces": [
