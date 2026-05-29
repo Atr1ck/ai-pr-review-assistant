@@ -86,6 +86,12 @@ GET /api/health
 POST /api/github/parse-pr-url
 ```
 
+### 获取PR Metadata
+
+```txt
+GET /api/github/pull-request?owner=facebook&repo=react&pullNumber=123
+```
+
 ## AI Review Pipeline 设计
 
 计划流程：

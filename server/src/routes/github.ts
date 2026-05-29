@@ -4,6 +4,9 @@ import { getPullRequestMetadata } from '../github/getPullRequestMetadata.js';
 
 export const githubRouter = Router();
 
+// 解析 PR URL
+// @param: { url: string }
+// @response: { owner: string, repo: string, prNumber: number }
 githubRouter.post('/parse-pr-url', (req, res) => {
     const url = req.body?.url;
     
@@ -24,6 +27,9 @@ githubRouter.post('/parse-pr-url', (req, res) => {
     }
 });
 
+// 获取元数据
+// @param: ?owner=xxx&repo=yyy&pullNumber=123
+// @response: { title, description, author: { login, avatarUrl, htmlUrl } | null, state, htmlUrl, baseBranch, headBranch, headSha, additions, deletions, changedFiles }
 githubRouter.get('/pull-request',async (req, res) => {
     const owner = req.query.owner;
     const repo = req.query.repo;
