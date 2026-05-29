@@ -1,0 +1,25 @@
+{
+  "name": "ai-pr-review-assistant",
+  "version": "0.1.0",
+  "description": "An AI-powered PR review assistant that helps developers quickly understand and review code changes. ",
+  "homepage": "https://github.com/Atr1ck/ai-pr-review-assistant#readme",
+  "bugs": {
+    "url": "https://github.com/Atr1ck/ai-pr-review-assistant/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Atr1ck/ai-pr-review-assistant.git"
+  },
+  "license": "MIT",
+  "author": "Atr1ck",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "echo \"web and server dev scripts will be added in later PRs",
+    "lint": "echo \"lint will be added in later PRs\""
+  },
+  "workspaces": [
+    "apps/web",
+    "server",
+    "shared"
+  ]
+}
