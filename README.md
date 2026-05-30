@@ -97,7 +97,13 @@ GET /api/github/pull-request?owner=facebook&repo=react&pullNumber=123
 GET /api/github/pull-request/files?owner=facebook&repo=react&pullNumber=123
 ```
 
+### 构建 Review Context
+
 ## AI Review Pipeline 设计
+
+```txt
+GET /api/review/context?owner=facebook&repo=react&pullNumber=31650
+```
 
 计划流程：
 
