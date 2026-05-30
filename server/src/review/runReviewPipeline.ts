@@ -126,8 +126,7 @@ export async function runReviewPipeline({
   });
 
     const suggestions = await generateReviewSuggestions(
-    context,
-    riskResult.risks,
+    riskResult.risks
   );
 
     sendEvent(res, {

@@ -60,6 +60,7 @@ export type ReviewRisk = {
 export type ReviewSuggestion = {
   file: string;
   line?: number;
+  riskTitle: string;
   title: string;
   comment: string;
   suggestedChange: string;
