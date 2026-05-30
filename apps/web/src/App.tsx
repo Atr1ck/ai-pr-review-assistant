@@ -456,9 +456,35 @@ function App() {
                         <p className="mt-2 text-sm leading-6 text-slate-700">
                           {risk.reason}
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-blue-700">
-                          Suggestion: {risk.suggestion}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {reviewResult.suggestions.length > 0 ? (
+                <div>
+                  <span className="text-slate-500">Review Suggestions</span>
+                  <div className="mt-2 space-y-2">
+                    {reviewResult.suggestions.map((suggestion) => (
+                      <div
+                        key={`${suggestion.file}-${suggestion.title}`}
+                        className="rounded-md border border-blue-100 bg-blue-50 p-3"
+                      >
+                        <p className="font-medium text-slate-900">{suggestion.title}</p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {suggestion.file}
+                          {suggestion.line ? ` · line ${suggestion.line}` : ''}
                         </p>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-700">
+                          {suggestion.comment}
+                        </p>
+
+                        <div className="mt-2 rounded-md bg-white p-2 text-sm leading-6 text-blue-800">
+                          {suggestion.suggestedChange}
+                        </div>
                       </div>
                     ))}
                   </div>
