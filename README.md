@@ -17,6 +17,28 @@ AI PR Review Assistant 是一个可视化、流式、上下文感知的 GitHub P
 - Risk Detection
 - Review Suggestions
 
+
+## AI Review Loop 设计
+
+本项目将 AI Review 设计为受控 LLM Loop，而不是一次性总结。
+
+Loop 每轮只能输出一个 action：
+
+- `inspect_file`：选择一个文件进行审查
+- `record_risk`：记录一个有证据支持的风险
+- `record_suggestion`：基于已有 risk 生成 Review 建议
+- `finish`：结束审查并输出总结
+
+约束策略：
+
+- 最多 6 轮
+- 最多检查 3 个文件
+- 最多记录 5 个风险
+- 最多生成 5 条建议
+- suggestion 必须引用已有 riskId
+- 未检查文件不能记录风险
+- 优先减少误报
+
 ## 技术栈
 
 - Frontend：React + TypeScript + Vite
