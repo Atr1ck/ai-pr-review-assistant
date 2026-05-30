@@ -436,6 +436,35 @@ function App() {
                 </p>
               </div>
 
+              {reviewResult.risks.length > 0 ? (
+                <div>
+                  <span className="text-slate-500">Risks</span>
+                  <div className="mt-2 space-y-2">
+                    {reviewResult.risks.map((risk) => (
+                      <div
+                        key={`${risk.file}-${risk.title}`}
+                        className="rounded-md border border-slate-200 bg-white p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-slate-900">{risk.title}</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {risk.file} · {risk.type} · {risk.level}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">
+                          {risk.reason}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-blue-700">
+                          Suggestion: {risk.suggestion}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {reviewResult.changedModules.length > 0 ? (
                 <div>
                   <span className="text-slate-500">Changed Modules</span>
