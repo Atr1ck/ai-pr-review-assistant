@@ -7,7 +7,6 @@ export type ReviewRisk = {
   type: string;
   title: string;
   reason: string;
-  suggestion: string;
 };
 
 type RiskDetectionResult = {
@@ -30,7 +29,6 @@ Return ONLY valid JSON in this exact shape:
       "type": "string",
       "title": "string",
       "reason": "string",
-      "suggestion": "string"
     }
   ]
 }
