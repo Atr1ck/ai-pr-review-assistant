@@ -1,7 +1,8 @@
 import type { Response } from 'express';
 import { buildReviewContext } from './buildReviewContext.js';
 import { generatePrSummary } from './generatePrSummary.js';
-import { detectRisks } from './detectRisks.js';
+import { generateDetectRisks } from './generateDetectRisks.js';
+import { generateReviewSuggestions } from './generateReviewSuggestions.js';
 
 type RunReviewPipelineInput = {
   owner: string;
@@ -108,9 +109,9 @@ export async function runReviewPipeline({
     message: '检测潜在风险...',
   });
 
-    const riskResult = await detectRisks(context);
+    const riskResult = await generateDetectRisks(context);
 
-    sendEvent(res, {
+  sendEvent(res, {
     type: 'step',
     step: 'detect-risks',
     status: 'completed',
@@ -124,7 +125,16 @@ export async function runReviewPipeline({
     message: '生成审查建议...',
   });
 
-  await wait(500);
+    const suggestions = await generateReviewSuggestions(
+    riskResult.risks
+  );
+
+    sendEvent(res, {
+    type: 'step',
+    step: 'generate-suggestions',
+    status: 'completed',
+    message: '审查建议生成完成。',
+  });
 
   sendEvent(res, {
     type: 'result',
@@ -136,7 +146,7 @@ export async function runReviewPipeline({
         .slice(0, 5)
         .map((file) => file.filename.split('/')[0] ?? file.filename),
       risks: riskResult.risks,
-      suggestions: [],
+      suggestions: suggestions,
     },
   });
 

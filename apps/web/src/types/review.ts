@@ -55,7 +55,15 @@ export type ReviewRisk = {
   type: string;
   title: string;
   reason: string;
-  suggestion: string;
+};
+
+export type ReviewSuggestion = {
+  file: string;
+  line?: number;
+  riskTitle: string;
+  title: string;
+  comment: string;
+  suggestedChange: string;
 };
 
 export type ReviewResult = {
@@ -63,7 +71,7 @@ export type ReviewResult = {
   riskLevel: 'low' | 'medium' | 'high';
   changedModules: string[];
   risks: ReviewRisk[];
-  suggestions: unknown[];
+  suggestions: ReviewSuggestion[];
 };
 
 export type ReviewPipelineEvent =

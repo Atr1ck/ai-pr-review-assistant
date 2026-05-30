@@ -7,7 +7,6 @@ export type ReviewRisk = {
   type: string;
   title: string;
   reason: string;
-  suggestion: string;
 };
 
 type RiskDetectionResult = {
@@ -30,7 +29,6 @@ Return ONLY valid JSON in this exact shape:
       "type": "string",
       "title": "string",
       "reason": "string",
-      "suggestion": "string"
     }
   ]
 }
@@ -82,7 +80,7 @@ function safeJsonParse(text: string): RiskDetectionResult {
   }
 }
 
-export async function detectRisks(context: ReviewContext) {
+export async function generateDetectRisks(context: ReviewContext) {
   const raw = await createRightCodeResponse({
     prompt: buildRiskPrompt(context),
   });
