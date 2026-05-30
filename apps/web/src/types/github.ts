@@ -21,3 +21,15 @@ export type PullRequestMetadata = {
   deletions: number;
   changedFiles: number;
 };
+
+export type PullRequestFile = {
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch: string;
+  blobUrl: string;
+  rawUrl: string;
+  contentsUrl: string;
+};

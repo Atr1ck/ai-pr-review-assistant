@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
-import { parsePRUrl, fetchPRMetadata} from './api/github';
-import type { ParsedPRInfo, PullRequestMetadata } from './types/github';
-
-const mockFiles = [
-  'server/src/auth/middleware.ts',
-  'server/src/routes/pullRequest.ts',
-  'apps/web/src/App.tsx',
-];
+import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
+import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile } from './types/github';
 
 const pipelineSteps = [
   '等待 PR URL',
@@ -25,6 +19,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isParsing, setIsparsing] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [files, setFiles] = useState<PullRequestFile[]>([]);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -33,6 +29,8 @@ function App() {
     setPrMetadata(null);
     setIsparsing(true);
     setIsDescriptionExpanded(false);
+    setFiles([]);
+    setSelectedFileName(null);
 
     try {
       const result = await parsePRUrl(prUrl);
@@ -40,12 +38,18 @@ function App() {
 
       const metadata = await fetchPRMetadata(result);
       setPrMetadata(metadata);
+
+      const files = await fetchPullRequestFiles(result);
+      setFiles(files);
+      setSelectedFileName(files[0]?.filename ?? null); // 默认选择第一个文件
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse PR URL');
     } finally {
       setIsparsing(false);
     }
   };
+
+  const selectedFile = files.find((file) => file.filename === selectedFileName) || null;
 
 
   return (
@@ -87,7 +91,7 @@ function App() {
       ) : null }
 
       <section className="flex-1 grid gap-4 xl:grid-cols-[280px_minmax(360px,1fr)_340px]">
-        <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
+        <aside className="min-h-130rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="mb-4 text-lg font-semibold">Pull Request</h2>
 
           {prMetadata && parsedInfo ? (
@@ -119,13 +123,13 @@ function App() {
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">Base</span>
-                  <span className="max-w-[160px] truncate font-medium text-slate-900">
+                  <span className="max-w-40 truncate font-medium text-slate-900">
                     {prMetadata.baseBranch}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">Head</span>
-                  <span className="max-w-[160px] truncate font-medium text-slate-900">
+                  <span className="max-w-40 truncate font-medium text-slate-900">
                     {prMetadata.headBranch}
                   </span>
                 </div>
@@ -188,16 +192,53 @@ function App() {
           <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
             已更改的文件列表
           </h3>
-          <ul className="space-y-2 text-sm text-slate-600">
-            {mockFiles.map((file) => (
-              <li key={file} className="break-words">
-                {file}
-              </li>
-            ))}
-          </ul>
+              {files.length > 0 ? (
+                <ul className="space-y-2 text-sm">
+                  {files.map((file) => {
+                    const isSelected = file.filename === selectedFileName;
+
+                    return (
+                      <li key={file.filename}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFileName(file.filename)}
+                          className={[
+                            'w-full rounded-md border p-2 text-left transition',
+                            isSelected
+                              ? 'border-blue-200 bg-blue-50'
+                              : 'border-slate-200 bg-white hover:bg-slate-50',
+                          ].join(' ')}
+                        >
+                          <div className="wrap-break-word font-medium text-slate-800">
+                            {file.filename}
+                          </div>
+                          <div className="mt-1 flex items-center justify-between gap-2 text-xs">
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">
+                              {file.status}
+                            </span>
+                            <span>
+                              <span className="font-medium text-emerald-700">
+                                +{file.additions}
+                              </span>
+                              <span className="mx-1 text-slate-400">/</span>
+                              <span className="font-medium text-red-700">
+                                -{file.deletions}
+                              </span>
+                            </span>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
+                  Changed files will appear after analysis.
+                </div>
+              )}
         </aside>
 
-        <section className="flex flex-col min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
+        <section className="flex flex-col min-h-130 rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="mb-4 text-lg font-semibold">Diff 视图</h2>
           <pre className="flex-1 overflow-auto rounded-md bg-slate-950 p-4 text-sm leading-6 text-slate-200">
 {`@@ -1,5 +1,8 @@
@@ -208,7 +249,7 @@ function App() {
           </pre>
         </section>
 
-        <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
+        <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="mb-4 text-lg font-semibold">AI Review 管线</h2>
 
           <ol className="space-y-2 text-sm">
