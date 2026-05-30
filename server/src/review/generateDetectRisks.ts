@@ -82,7 +82,7 @@ function safeJsonParse(text: string): RiskDetectionResult {
   }
 }
 
-export async function detectRisks(context: ReviewContext) {
+export async function generateDetectRisks(context: ReviewContext) {
   const raw = await createRightCodeResponse({
     prompt: buildRiskPrompt(context),
   });
