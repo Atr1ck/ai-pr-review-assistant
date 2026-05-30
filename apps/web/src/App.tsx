@@ -4,16 +4,8 @@ import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './types/github';
 import { PatchViewer } from './components/PatchViewer';
 import { fetchReviewContext } from './api/review';
-import type { ReviewContext } from './types/review';
+import type { ReviewContext, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
 
-const pipelineSteps = [
-  '等待 PR URL',
-  '获取 PR 元数据',
-  '获取更改的文件',
-  '解析 diff',
-  '构建审查上下文',
-  '生成 AI 审查结果',
-];
 
 function App() {
   const [prUrl, setprUrl] = useState('');
@@ -26,9 +18,75 @@ function App() {
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [reviewContext, setReviewContext] = useState<ReviewContext | null>(null);
   const [isBuildingContext, setIsBuildingContext] = useState(false);
+  const [pipelineSteps, setPipelineSteps] = useState<ReviewPipelineStep[]>([
+  { id: 'fetch-metadata', label: 'Fetch PR metadata', status: 'idle' },
+  { id: 'fetch-files', label: 'Fetch changed files', status: 'idle' },
+  { id: 'build-context', label: 'Build review context', status: 'idle' },
+  { id: 'detect-risks', label: 'Detect risky changes', status: 'idle' },
+  { id: 'generate-suggestions', label: 'Generate review suggestions', status: 'idle' },
+]);
+  const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
+
+  function runReviewStream(parsedPr: ParsedPRInfo) {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+
+    const searchParams = new URLSearchParams({
+      owner: parsedPr.owner,
+      repo: parsedPr.repo,
+      pullNumber: String(parsedPr.prNumber),
+    });
+
+    const eventSource = new EventSource(
+      `${apiBaseUrl}/api/review/stream?${searchParams.toString()}`,
+    );
+
+    eventSource.onmessage = (event) => {
+      const payload = JSON.parse(event.data) as ReviewPipelineEvent;
+
+      if (payload.type === 'step') {
+        setPipelineSteps((steps) =>
+          steps.map((step) =>
+            step.id === payload.step
+              ? {
+                  ...step,
+                  status: payload.status,
+                  message: payload.message,
+                }
+              : step,
+          ),
+        );
+      }
+
+      if (payload.type === 'result') {
+        setReviewResult(payload.result);
+      }
+
+      if (payload.type === 'done') {
+        eventSource.close();
+      }
+
+      if (payload.type === 'error') {
+        setError(payload.error);
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = () => {
+      setError('Review stream connection failed');
+      eventSource.close();
+    };
+  }
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
+    setReviewResult(null);
+    setPipelineSteps((steps) =>
+      steps.map((step) => ({
+        ...step,
+        status: 'idle',
+        message: undefined,
+      })),
+    );
     setError(null);
     setParsedInfo(null);
     setPrMetadata(null);
@@ -42,6 +100,9 @@ function App() {
     try {
       const result = await parsePRUrl(prUrl);
       setParsedInfo(result);
+
+
+      runReviewStream(result);
 
       const metadata = await fetchPRMetadata(result);
       setPrMetadata(metadata);
@@ -257,31 +318,25 @@ function App() {
               <h2 className="mb-4 text-lg font-semibold">AI 审查管线</h2>
 
               <ol className="space-y-2 text-sm">
-                <li className={parsedInfo ? 'font-semibold text-emerald-700' : 'text-slate-600'}>
-                  解析 PR URL
-                </li>
-                <li className={prMetadata ? 'font-semibold text-emerald-700' : 'text-slate-600'}>
-                  获取 PR 元数据
-                </li>
-                <li className={files.length > 0 ? 'font-semibold text-emerald-700' : 'text-slate-600'}>
-                  获取更改的文件
-                </li>
-                <li
-                  className={
-                    reviewContext
-                      ? 'font-semibold text-emerald-700'
-                      : isBuildingContext
-                        ? 'font-semibold text-blue-600'
-                        : 'text-slate-600'
-                  }
-                >
-                  构建审查上下文
-                </li>
+                {pipelineSteps.map((step) => (
+                  <li
+                    key={step.id}
+                    className={[
+                      'rounded-md border p-2',
+                      step.status === 'completed'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : step.status === 'running'
+                          ? 'border-blue-200 bg-blue-50 text-blue-800'
+                          : 'border-slate-200 bg-white text-slate-600',
+                    ].join(' ')}
+                  >
+                    <div className="font-medium">{step.label}</div>
+                    {step.message ? (
+                      <div className="mt-1 text-xs opacity-80">{step.message}</div>
+                    ) : null}
+                  </li>
+                ))}
               </ol>
-
-              <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
-                  上下文摘要
-              </h3>
 
               {reviewContext ? (
                 <div className="space-y-3">
@@ -329,7 +384,7 @@ function App() {
 
                   {reviewContext.stats.largeChange ? (
                     <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      Large PR detected. AI review should prioritize high-risk files.
+                      大型 PR 检测到。AI 审查应优先考虑高风险文件。
                     </div>
                   ) : null}
 
@@ -364,14 +419,48 @@ function App() {
           <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
             Review 结果
           </h3>
-          <div className="grid gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-            <strong className="text-slate-800">审查结果</strong>
-            <span>风险审查和建议将在此处显示。</span>
-          </div>
+          {reviewResult ? (
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              <div>
+                <span className="text-slate-500">Risk Level</span>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {reviewResult.riskLevel}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-slate-500">Summary</span>
+                <p className="mt-1 leading-6 text-slate-700">
+                  {reviewResult.summary}
+                </p>
+              </div>
+
+              {reviewResult.changedModules.length > 0 ? (
+                <div>
+                  <span className="text-slate-500">Changed Modules</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {reviewResult.changedModules.map((module) => (
+                      <span
+                        key={module}
+                        className="rounded bg-white px-2 py-1 text-xs text-slate-700"
+                      >
+                        {module}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+              Review result will stream here.
+            </div>
+          )}
         </aside>
       </section>
     </main>
   );
 }
+
 
 export default App;

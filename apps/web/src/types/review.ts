@@ -39,3 +39,39 @@ export type ReviewContext = {
   };
   warnings: string[];
 };
+
+export type ReviewPipelineStepStatus = 'idle' | 'running' | 'completed';
+
+export type ReviewPipelineStep = {
+  id: string;
+  label: string;
+  status: ReviewPipelineStepStatus;
+  message?: string;
+};
+
+export type ReviewResult = {
+  summary: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  changedModules: string[];
+  risks: unknown[];
+  suggestions: unknown[];
+};
+
+export type ReviewPipelineEvent =
+  | {
+      type: 'step';
+      step: string;
+      status: 'running' | 'completed';
+      message: string;
+    }
+  | {
+      type: 'result';
+      result: ReviewResult;
+    }
+  | {
+      type: 'done';
+    }
+  | {
+      type: 'error';
+      error: string;
+    };
