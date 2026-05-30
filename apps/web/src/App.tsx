@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile } from './types/github';
+import { PatchViewer } from './components/PatchViewer';
 
 const pipelineSteps = [
   '等待 PR URL',
@@ -238,16 +239,7 @@ function App() {
               )}
         </aside>
 
-        <section className="flex flex-col min-h-130 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-4 text-lg font-semibold">Diff 视图</h2>
-          <pre className="flex-1 overflow-auto rounded-md bg-slate-950 p-4 text-sm leading-6 text-slate-200">
-{`@@ -1,5 +1,8 @@
-+ AI review diff preview will appear here.
-+ Changed lines will be highlighted later.
-- Old code
-+ New code`}
-          </pre>
-        </section>
+        <PatchViewer file={selectedFile} />
 
         <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="mb-4 text-lg font-semibold">AI Review 管线</h2>
