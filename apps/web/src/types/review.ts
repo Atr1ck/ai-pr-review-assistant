@@ -49,11 +49,20 @@ export type ReviewPipelineStep = {
   message?: string;
 };
 
+export type ReviewRisk = {
+  file: string;
+  level: 'low' | 'medium' | 'high';
+  type: string;
+  title: string;
+  reason: string;
+  suggestion: string;
+};
+
 export type ReviewResult = {
   summary: string;
   riskLevel: 'low' | 'medium' | 'high';
   changedModules: string[];
-  risks: unknown[];
+  risks: ReviewRisk[];
   suggestions: unknown[];
 };
 
@@ -75,3 +84,4 @@ export type ReviewPipelineEvent =
       type: 'error';
       error: string;
     };
+
