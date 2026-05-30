@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
-import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile } from './types/github';
+import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './types/github';
 import { PatchViewer } from './components/PatchViewer';
+import { fetchReviewContext } from './api/review';
+import type { ReviewContext } from './types/review';
 
 const pipelineSteps = [
   '等待 PR URL',
@@ -22,6 +24,8 @@ function App() {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [files, setFiles] = useState<PullRequestFile[]>([]);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [reviewContext, setReviewContext] = useState<ReviewContext | null>(null);
+  const [isBuildingContext, setIsBuildingContext] = useState(false);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -32,6 +36,8 @@ function App() {
     setIsDescriptionExpanded(false);
     setFiles([]);
     setSelectedFileName(null);
+    setReviewContext(null);
+    setIsBuildingContext(false);
 
     try {
       const result = await parsePRUrl(prUrl);
@@ -43,10 +49,15 @@ function App() {
       const files = await fetchPullRequestFiles(result);
       setFiles(files);
       setSelectedFileName(files[0]?.filename ?? null); // 默认选择第一个文件
+
+      setIsBuildingContext(true);
+      const nextReviewContext = await fetchReviewContext(result);
+      setReviewContext(nextReviewContext);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse PR URL');
     } finally {
       setIsparsing(false);
+      setIsBuildingContext(false);
     }
   };
 
@@ -242,18 +253,113 @@ function App() {
         <PatchViewer file={selectedFile} />
 
         <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-4 text-lg font-semibold">AI Review 管线</h2>
+          <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
+              <h2 className="mb-4 text-lg font-semibold">AI 审查管线</h2>
 
-          <ol className="space-y-2 text-sm">
-            {pipelineSteps.map((step, index) => (
-              <li
-                key={step}
-                className={index === 0 ? 'font-semibold text-blue-600' : 'text-slate-600'}
-              >
-                {step}
-              </li>
-            ))}
-          </ol>
+              <ol className="space-y-2 text-sm">
+                <li className={parsedInfo ? 'font-semibold text-emerald-700' : 'text-slate-600'}>
+                  解析 PR URL
+                </li>
+                <li className={prMetadata ? 'font-semibold text-emerald-700' : 'text-slate-600'}>
+                  获取 PR 元数据
+                </li>
+                <li className={files.length > 0 ? 'font-semibold text-emerald-700' : 'text-slate-600'}>
+                  获取更改的文件
+                </li>
+                <li
+                  className={
+                    reviewContext
+                      ? 'font-semibold text-emerald-700'
+                      : isBuildingContext
+                        ? 'font-semibold text-blue-600'
+                        : 'text-slate-600'
+                  }
+                >
+                  构建审查上下文
+                </li>
+              </ol>
+
+              <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
+                  上下文摘要
+              </h3>
+
+              {reviewContext ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div className="rounded-md bg-slate-50 p-2">
+                      <div className="font-semibold text-slate-900">
+                        {reviewContext.stats.totalFiles}
+                      </div>
+                      <div className="text-xs text-slate-500">Total</div>
+                    </div>
+                    <div className="rounded-md bg-emerald-50 p-2">
+                      <div className="font-semibold text-emerald-700">
+                        {reviewContext.stats.includedFiles}
+                      </div>
+                      <div className="text-xs text-slate-500">Included</div>
+                    </div>
+                    <div className="rounded-md bg-amber-50 p-2">
+                      <div className="font-semibold text-amber-700">
+                        {reviewContext.stats.ignoredFiles}
+                      </div>
+                      <div className="text-xs text-slate-500">Ignored</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-500">Additions</span>
+                      <span className="font-medium text-emerald-700">
+                        +{reviewContext.stats.totalAdditions}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex justify-between gap-3">
+                      <span className="text-slate-500">Deletions</span>
+                      <span className="font-medium text-red-700">
+                        -{reviewContext.stats.totalDeletions}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex justify-between gap-3">
+                      <span className="text-slate-500">Changes</span>
+                      <span className="font-medium text-slate-900">
+                        {reviewContext.stats.totalChanges}
+                      </span>
+                    </div>
+                  </div>
+
+                  {reviewContext.stats.largeChange ? (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                      Large PR detected. AI review should prioritize high-risk files.
+                    </div>
+                  ) : null}
+
+                  {reviewContext.warnings.length > 0 ? (
+                    <div>
+                      <h3 className="mb-2 text-sm font-semibold text-slate-700">
+                        Context Warnings
+                      </h3>
+                      <ul className="space-y-2 text-sm text-slate-600">
+                        {reviewContext.warnings.slice(0, 6).map((warning) => (
+                          <li
+                            key={warning}
+                            className="rounded-md border border-slate-200 bg-white p-2"
+                          >
+                            {warning}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="grid gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                  <strong className="text-slate-800">
+                    {isBuildingContext ? 'Building context' : 'Context pending'}
+                  </strong>
+                  <span>Review context will appear after PR files are loaded.</span>
+                </div>
+              )}
+            </aside>
 
           <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
             Review 结果
