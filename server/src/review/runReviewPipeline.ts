@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import { buildReviewContext } from './buildReviewContext.js';
 import { generatePrSummary } from './generatePrSummary.js';
+import { detectRisks } from './detectRisks.js';
 
 type RunReviewPipelineInput = {
   owner: string;
@@ -104,10 +105,17 @@ export async function runReviewPipeline({
     type: 'step',
     step: 'detect-risks',
     status: 'running',
-    message: '检测风险变更...',
+    message: '检测潜在风险...',
   });
 
-  await wait(500);
+    const riskResult = await detectRisks(context);
+
+    sendEvent(res, {
+    type: 'step',
+    step: 'detect-risks',
+    status: 'completed',
+    message: '风险检测完成。',
+  });
 
   sendEvent(res, {
     type: 'step',
@@ -122,12 +130,12 @@ export async function runReviewPipeline({
     type: 'result',
     result: {
       summary: summary,
-      riskLevel: context.stats.largeChange ? 'medium' : 'low',
+      riskLevel: riskResult.riskLevel,
       changedModules: context.files
         .filter((file) => !file.ignored)
         .slice(0, 5)
         .map((file) => file.filename.split('/')[0] ?? file.filename),
-      risks: [],
+      risks: riskResult.risks,
       suggestions: [],
     },
   });
