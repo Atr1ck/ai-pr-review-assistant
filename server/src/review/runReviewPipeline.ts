@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import { buildReviewContext } from './buildReviewContext.js';
+import { generatePrSummary } from './generatePrSummary.js';
 
 type RunReviewPipelineInput = {
   owner: string;
@@ -83,7 +84,21 @@ export async function runReviewPipeline({
     message: '审查上下文构建完成。',
   });
 
-  await wait(400);
+  sendEvent(res, {
+    type: 'step',
+    step: 'generate-summary',
+    status: 'running',
+    message: '正在生成 PR 摘要...',
+  });
+
+  const summary = await generatePrSummary(context);
+
+  sendEvent(res, {
+    type: 'step',
+    step: 'generate-summary',
+    status: 'completed',
+    message: '生成 PR 摘要完成。',
+  });
 
   sendEvent(res, {
     type: 'step',
@@ -106,7 +121,7 @@ export async function runReviewPipeline({
   sendEvent(res, {
     type: 'result',
     result: {
-      summary: `This PR changes ${context.stats.includedFiles} reviewable files with ${context.stats.totalAdditions} additions and ${context.stats.totalDeletions} deletions.`,
+      summary: summary,
       riskLevel: context.stats.largeChange ? 'medium' : 'low',
       changedModules: context.files
         .filter((file) => !file.ignored)

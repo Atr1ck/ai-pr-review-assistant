@@ -22,6 +22,7 @@ function App() {
   { id: 'fetch-metadata', label: 'Fetch PR metadata', status: 'idle' },
   { id: 'fetch-files', label: 'Fetch changed files', status: 'idle' },
   { id: 'build-context', label: 'Build review context', status: 'idle' },
+  { id: 'generate-summary', label: 'Generate PR summary', status: 'idle' },
   { id: 'detect-risks', label: 'Detect risky changes', status: 'idle' },
   { id: 'generate-suggestions', label: 'Generate review suggestions', status: 'idle' },
 ]);
@@ -317,7 +318,7 @@ function App() {
           <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
               <h2 className="mb-4 text-lg font-semibold">AI 审查管线</h2>
 
-              <ol className="space-y-2 text-sm">
+              <ol className="space-y-2 text-sm mb-3">
                 {pipelineSteps.map((step) => (
                   <li
                     key={step.id}
