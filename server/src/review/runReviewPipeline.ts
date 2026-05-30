@@ -70,7 +70,7 @@ export async function runReviewPipeline({
     type: 'step',
     step: 'build-context',
     status: 'running',
-    message: '构建审查上下文...',
+    message: '构建Review Context...',
   });
 
   const context = await buildReviewContext({
@@ -81,9 +81,23 @@ export async function runReviewPipeline({
 
   sendEvent(res, {
     type: 'step',
+    step: 'fetch-metadata',
+    status: 'completed',
+    message: 'PR 元数据获取完成',
+  });
+
+    sendEvent(res, {
+    type: 'step',
+    step: 'fetch-files',
+    status: 'completed',
+    message: '更改文件获取完成',
+  });
+
+  sendEvent(res, {
+    type: 'step',
     step: 'build-context',
     status: 'completed',
-    message: '审查上下文构建完成。',
+    message: 'Review Context构建完成。',
   });
 
   sendEvent(res, {
@@ -122,7 +136,7 @@ export async function runReviewPipeline({
     type: 'step',
     step: 'generate-suggestions',
     status: 'running',
-    message: '生成审查建议...',
+    message: '生成Review建议...',
   });
 
     const suggestions = await generateReviewSuggestions(
@@ -133,7 +147,7 @@ export async function runReviewPipeline({
     type: 'step',
     step: 'generate-suggestions',
     status: 'completed',
-    message: '审查建议生成完成。',
+    message: 'Review建议生成完成。',
   });
 
   sendEvent(res, {

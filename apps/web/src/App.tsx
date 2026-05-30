@@ -316,7 +316,7 @@ function App() {
 
         <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
           <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
-              <h2 className="mb-4 text-lg font-semibold">AI 审查管线</h2>
+              <h2 className="mb-4 text-lg font-semibold">AI Review 流程</h2>
 
               <ol className="space-y-2 text-sm mb-3">
                 {pipelineSteps.map((step) => (
@@ -423,14 +423,14 @@ function App() {
           {reviewResult ? (
             <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
               <div>
-                <span className="text-slate-500">Risk Level</span>
+                <span className="text-slate-500">风险等级</span>
                 <p className="mt-1 font-semibold text-slate-900">
                   {reviewResult.riskLevel}
                 </p>
               </div>
 
               <div>
-                <span className="text-slate-500">Summary</span>
+                <span className="text-slate-500">摘要</span>
                 <p className="mt-1 leading-6 text-slate-700">
                   {reviewResult.summary}
                 </p>
@@ -438,7 +438,7 @@ function App() {
 
               {reviewResult.risks.length > 0 ? (
                 <div>
-                  <span className="text-slate-500">Risks</span>
+                  <span className="text-slate-500">风险</span>
                   <div className="mt-2 space-y-2">
                     {reviewResult.risks.map((risk) => (
                       <div
@@ -464,7 +464,7 @@ function App() {
 
               {reviewResult.suggestions.length > 0 ? (
                 <div>
-                  <span className="text-slate-500">Review Suggestions</span>
+                  <span className="text-slate-500">Review 建议</span>
                   <div className="mt-2 space-y-2">
                     {reviewResult.suggestions.map((suggestion) => (
                       <div
@@ -476,6 +476,10 @@ function App() {
                         <p className="mt-1 text-xs text-slate-500">
                           {suggestion.file}
                           {suggestion.line ? ` · line ${suggestion.line}` : ''}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Related risk: {suggestion.riskTitle}
                         </p>
 
                         <p className="mt-2 text-sm leading-6 text-slate-700">
@@ -493,7 +497,7 @@ function App() {
 
               {reviewResult.changedModules.length > 0 ? (
                 <div>
-                  <span className="text-slate-500">Changed Modules</span>
+                  <span className="text-slate-500">更改的模块</span>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {reviewResult.changedModules.map((module) => (
                       <span
@@ -509,7 +513,7 @@ function App() {
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              Review result will stream here.
+              Review 结果将在AI审查完成后显示。
             </div>
           )}
         </aside>
