@@ -1,13 +1,20 @@
 # AI PR Review Assistant
 
-⚠️ 后端部署在Render的免费计划下，长时间不使用会关闭项目，因此第一次解析时会卡住需要等待启动
-⚠️ 模型的API接入走的是RightCode中转站，可能会遇到中转站网络波动
 
-> Demo 视频：待补充
+> Demo 视频：[AI PR Review Assistant](https://www.bilibili.com/video/BV1rQVD62EV5/?spm_id_from=333.1387.homepage.video_card.click&vd_source=87d1ec5d00cd4af86caf6869cd5c82ab)
 
-AI PR Review Assistant 是一个可视化、流式、上下文感知的 GitHub Pull Request 代码评审工具。
+
+- ⚠️ 后端部署在Render的免费计划下，长时间不使用会关闭项目，因此第一次解析时可能会卡住需要等待启动
+- ⚠️ 前端部署在Vercel上，需要一些神秘魔法
+- ⚠️ 模型的API接入走的是RightCode中转站，可能会遇到中转站网络波动
+- 提供可复制测试的一些PR URL：
+    - `https://github.com/Atr1ck/ai-pr-review-assistant/pull/12`
+    - `https://github.com/saadeghi/daisyui/pull/4432`
+    - `https://github.com/ant-design/ant-design/pull/58157`
 
 本项目选择题目：**AI PR Review 助手**。
+
+AI PR Review Assistant 是一个可视化、流式、上下文感知的 GitHub Pull Request 代码评审工具。
 
 项目目标不是做一个简单的“输入 PR URL 后让模型总结”的工具，而是把 PR Review 过程设计成一个可视化 AI Review Pipeline：系统会获取真实 PR 上下文，构建 Review Context，再通过受控 **AI Review LLM Loop** 像工程师一样逐步审查文件、记录风险、生成建议，并通过 **SSE** 实时展示执行过程。
 
