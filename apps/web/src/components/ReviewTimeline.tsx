@@ -87,7 +87,7 @@ export function ReviewTimeline({ actions }: ReviewTimelineProps) {
       {actions.map((action, index) => (
         <div
           key={`${action.type}-${index}`}
-          className="rounded-md border border-slate-200 bg-white p-3 text-sm"
+          className="card-hover rounded-md border border-slate-200 bg-white p-3 text-sm"
         >
           <div className="mb-2 flex items-center justify-between gap-3">
             <p className="font-medium text-slate-900">{getActionTitle(action)}</p>

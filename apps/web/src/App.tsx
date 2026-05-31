@@ -216,7 +216,7 @@ function App() {
                 </h3>
               </div>
 
-              <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              <div className="card-hover grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">State</span>
                   <span className="font-medium text-slate-900">{prMetadata.state}</span>
@@ -309,7 +309,7 @@ function App() {
                           type="button"
                           onClick={() => setSelectedFileName(file.filename)}
                           className={[
-                            'w-full rounded-md border p-2 text-left transition',
+                            'card-hover w-full rounded-md border p-2 text-left transition',
                             isSelected
                               ? 'border-blue-200 bg-blue-50'
                               : 'border-slate-200 bg-white hover:bg-slate-50',
@@ -351,7 +351,7 @@ function App() {
               <h2 className="mb-4 text-lg font-semibold">AI Review 流程</h2>
               
               {isReviewRunning ? (
-                <div className="mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                <div className="card-hover mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
                   <div className="font-medium">AI review is running</div>
                   <div className="mt-1 text-xs">
                     {streamMessage || 'Waiting for review events...'}
@@ -410,7 +410,7 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                  <div className="card-hover rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                     <div className="flex justify-between gap-3">
                       <span className="text-slate-500">Additions</span>
                       <span className="font-medium text-emerald-700">
@@ -432,7 +432,7 @@ function App() {
                   </div>
 
                   {reviewContext.stats.largeChange ? (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    <div className="card-hover rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                       大型 PR 检测到。AI 审查应优先考虑高风险文件。
                     </div>
                   ) : null}
@@ -446,7 +446,7 @@ function App() {
                         {reviewContext.warnings.slice(0, 6).map((warning) => (
                           <li
                             key={warning}
-                            className="rounded-md border border-slate-200 bg-white p-2"
+                            className="card-hover rounded-md border border-slate-200 bg-white p-2"
                           >
                             {warning}
                           </li>
@@ -491,7 +491,7 @@ function App() {
                     {reviewResult.risks.map((risk) => (
                       <div
                         key={`${risk.file}-${risk.title}`}
-                        className="rounded-md border border-slate-200 bg-white p-3"
+                        className="card-hover rounded-md border border-slate-200 bg-white p-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -517,7 +517,7 @@ function App() {
                     {reviewResult.suggestions.map((suggestion) => (
                       <div
                         key={`${suggestion.file}-${suggestion.title}`}
-                        className="rounded-md border border-blue-100 bg-blue-50 p-3"
+                        className="card-hover rounded-md border border-blue-100 bg-blue-50 p-3"
                       >
                         <p className="font-medium text-slate-900">{suggestion.title}</p>
 
