@@ -95,4 +95,9 @@ export type ReviewPipelineEvent =
   | {
       type: 'error';
       error: string;
-    };
+    }
+  | {
+    type: 'heartbeat';
+    message: string;
+    elapsedSeconds: number;
+  };

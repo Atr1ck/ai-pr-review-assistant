@@ -32,11 +32,32 @@ type PipelineEvent =
         action: unknown;
     }
   | {
+     type: 'heartbeat';
+     message: string;
+     elapsedSeconds: number;
+  }
+  | {
       type: 'done';
     };
 
 function sendEvent(res: Response, event: PipelineEvent) {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
+}
+
+function startHeartbeat(res: Response) {
+  const startedAt = Date.now();
+
+  const timer = setInterval(() => {
+    sendEvent(res, {
+      type: 'heartbeat',
+      message: 'AI review is still running...',
+      elapsedSeconds: Math.floor((Date.now() - startedAt) / 1000),
+    });
+  }, 8000);
+
+  return () => {
+    clearInterval(timer);
+  };
 }
 
 function wait(ms: number) {
@@ -61,7 +82,11 @@ export async function runReviewPipeline({
   pullNumber,
   res,
 }: RunReviewPipelineInput) {
-  sendEvent(res, {
+  const stopHeartbeat = startHeartbeat(res);
+
+  try {
+  
+    sendEvent(res, {
     type: 'step',
     step: 'fetch-metadata',
     status: 'running',
@@ -117,7 +142,7 @@ export async function runReviewPipeline({
     type: 'step',
     step: 'generate-summary',
     status: 'running',
-    message: '正在生成 PR 摘要...',
+    message: '正在调用模型生成 PR 摘要，可能需要一些时间...',
   });
 
   const summary = await generatePrSummary(context);
@@ -133,7 +158,7 @@ export async function runReviewPipeline({
     type: 'step',
     step: 'review-loop',
     status: 'running',
-    message: 'AI reviewer is inspecting the PR...',
+    message: 'AI 正在审查文件变更，可能需要多轮模型调用...',
   });
 
   const loopResult = await runReviewLoop({
@@ -187,4 +212,7 @@ export async function runReviewPipeline({
   });
 
   res.end();
+} finally {
+    stopHeartbeat();
+}
 }
