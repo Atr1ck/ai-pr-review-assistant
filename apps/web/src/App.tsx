@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { SubmitEvent } from 'react';
+import type { MouseEvent, SubmitEvent } from 'react';
 import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './types/github';
 import { PatchViewer } from './components/PatchViewer';
@@ -175,6 +175,24 @@ function App() {
     setActivePanel((currentPanel) => (currentPanel === panel ? null : panel));
   }
 
+  function handlePanelClick(event: MouseEvent<HTMLElement>, panel: ActivePanel) {
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const shouldIgnore = target.closest(
+      'button,a,input,textarea,select,pre,code,.card-hover,p,span,li,h2,h3',
+    );
+
+    if (shouldIgnore) {
+      return;
+    }
+
+    togglePanel(panel);
+  }
+
 
   return (
     <main className="flex flex-col min-h-screen bg-slate-100 p-6 text-slate-900">
@@ -221,7 +239,7 @@ function App() {
         ].join(' ')}
       >
         <aside
-          onClick={() => togglePanel('left')}
+          onClick={(event) => handlePanelClick(event, 'left')}
           className="min-h-130rounded-lg border border-slate-200 bg-white p-4"
         >
           <h2 className="mb-4 text-lg font-semibold">Pull Request</h2>
@@ -370,12 +388,12 @@ function App() {
               )}
         </aside>
 
-        <div onClick={() => togglePanel('center')}>
+        <div onClick={(event) => handlePanelClick(event, 'center')}>
           <PatchViewer file={selectedFile} />
         </div>
 
         <aside
-          onClick={() => togglePanel('right')}
+          onClick={(event) => handlePanelClick(event, 'right')}
           className="min-h-130 rounded-lg border border-slate-200 bg-white p-4"
         >
           <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
