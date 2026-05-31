@@ -122,7 +122,7 @@ function App() {
     setIsReviewRunning(true);
     setReviewStartedAt(Date.now());
     setElapsedSeconds(0);
-    setStreamMessage('AI review is starting...');
+    setStreamMessage('AI review 正在启动...');
     setError(null);
     setParsedInfo(null);
     setPrMetadata(null);
@@ -151,7 +151,7 @@ function App() {
       const nextReviewContext = await fetchReviewContext(result);
       setReviewContext(nextReviewContext);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse PR URL');
+      setError(err instanceof Error ? err.message : '无法解析 PR URL');
     } finally {
       setIsparsing(false);
       setIsBuildingContext(false);
@@ -169,7 +169,7 @@ function App() {
             AI PR Review Assistant
           </h1>
           <p className="mt-2 text-slate-600">
-            Github PR 的可视化管线
+            Github PR 的可视化流程
           </p>
         </div>
 
@@ -293,8 +293,8 @@ function App() {
             </div>
           ) : (
             <div className="grid gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              <strong className="text-slate-800">No PR loaded</strong>
-              <span>Enter a GitHub PR URL to start analysis.</span>
+              <strong className="text-slate-800">未加载 PR</strong>
+              <span>输入 GitHub PR URL 以开始分析。</span>
             </div>
           )}
 
@@ -342,7 +342,7 @@ function App() {
                 </ul>
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                  Changed files will appear after analysis.
+                  更改的文件列表将显示在这里。
                 </div>
               )}
         </aside>
@@ -355,12 +355,12 @@ function App() {
               
               {isReviewRunning ? (
                 <div className="card-hover mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                  <div className="font-medium">AI review is running</div>
+                  <div className="font-medium">AI review 正在进行中</div>
                   <div className="mt-1 text-xs">
                     {streamMessage || 'Waiting for review events...'}
                   </div>
                   <div className="mt-1 text-xs opacity-80">
-                    Elapsed: {elapsedSeconds}s
+                    已用时间: {elapsedSeconds}s
                   </div>
                 </div>
               ) : null}
@@ -451,7 +451,7 @@ function App() {
 
                   {reviewContext.stats.largeChange ? (
                     <div className="card-hover rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      大型 PR 检测到。AI 审查应优先考虑高风险文件。
+                      检测到大型 PR ，AI 审查应优先考虑高风险文件。
                     </div>
                   ) : null}
 
@@ -491,7 +491,7 @@ function App() {
               <div>
                 <span className="text-slate-500">风险等级</span>
                 <p className="mt-1 font-semibold text-slate-900">
-                  {reviewResult.riskLevel}
+                  {reviewResult.riskLevel === 'low' ? '低' : reviewResult.riskLevel === 'medium' ? '中' : '高'}
                 </p>
               </div>
 
@@ -515,7 +515,7 @@ function App() {
                           <div>
                             <p className="font-medium text-slate-900">{risk.title}</p>
                             <p className="mt-1 text-xs text-slate-500">
-                              {risk.file} · {risk.type} · {risk.level}
+                              {risk.file} · {risk.type} · {risk.level === 'low' ? '低' : risk.level === 'medium' ? '中' : '高'}
                             </p>
                           </div>
                         </div>
