@@ -22,8 +22,8 @@ export type ReviewLoopSuggestion = {
 
 export type ReviewLoopAction =
   | {
-      type: 'inspect_file';
-      file: string;
+      type: 'inspect_files';
+      files: string[];
       reason: string;
     }
   | {
@@ -55,8 +55,24 @@ export type ReviewLoopState = {
 };
 
 export const REVIEW_LOOP_LIMITS = {
-  maxIterations: 6,
-  maxInspectedFiles: 3,
-  maxRisks: 5,
-  maxSuggestions: 5,
+  maxIterations: 10,
+  maxRisks: 6,
+  maxSuggestions: 6,
+  maxFilesPerInspection: 5,
 } as const;
+
+export function getMaxInspectedFiles(totalFiles: number) {
+  if (totalFiles <= 6) {
+    return totalFiles;
+  }
+
+  if (totalFiles <= 15) {
+    return 10;
+  }
+
+  if (totalFiles <= 40) {
+    return 15;
+  }
+
+  return 20;
+}
