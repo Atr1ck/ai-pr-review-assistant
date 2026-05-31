@@ -1,6 +1,8 @@
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile } from '../types/github';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ??
+  (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
 export async function parsePRUrl(url: string): Promise<ParsedPRInfo> {
     const response = await fetch(`${API_BASE_URL}/github/parse-pr-url`, {

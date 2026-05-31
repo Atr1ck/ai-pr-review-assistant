@@ -31,6 +31,9 @@ function App() {
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [loopActions, setLoopActions] = useState<ReviewLoopAction[]>([]);
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ??
+    (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
   useEffect(() => {
       if (!isReviewRunning || reviewStartedAt === null) {
@@ -46,8 +49,6 @@ function App() {
       };
   }, [isReviewRunning, reviewStartedAt]);
   function runReviewStream(parsedPr: ParsedPRInfo) {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-
     const searchParams = new URLSearchParams({
       owner: parsedPr.owner,
       repo: parsedPr.repo,
