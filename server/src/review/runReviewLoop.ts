@@ -122,6 +122,39 @@ function shouldForceFinish(state: ReviewLoopState) {
   );
 }
 
+function hasNoFindingReviewChallenge(state: ReviewLoopState) {
+  return state.messages.some((message) =>
+    message.content.includes('no-finding-review-challenge'),
+  );
+}
+
+function shouldChallengeNoFindingFinish(
+  state: ReviewLoopState,
+  action: ReviewLoopAction,
+) {
+  return (
+    action.type === 'finish' &&
+    state.inspectedFiles.length > 0 &&
+    state.risks.length === 0 &&
+    !hasNoFindingReviewChallenge(state) &&
+    state.iteration < REVIEW_LOOP_LIMITS.maxIterations - 1
+  );
+}
+
+function addNoFindingReviewChallenge(state: ReviewLoopState): ReviewLoopState {
+  return {
+    ...state,
+    messages: [
+      ...state.messages,
+      {
+        role: 'tool',
+        content:
+          'no-finding-review-challenge: You are about to finish with zero risks after inspecting files. Re-check the inspected patches for concrete low or medium severity review findings, such as brittle error handling, missing validation, missing tests for changed behavior, API contract issues, or fragile state ordering. If there are still no supported findings, finish again and explain that no actionable findings were found.',
+      },
+    ],
+  };
+}
+
 export async function runReviewLoop({
   context,
   onAction,
@@ -136,6 +169,15 @@ export async function runReviewLoop({
     onAction?.(action, state);
 
     if (action.type === 'finish') {
+      if (shouldChallengeNoFindingFinish(state, action)) {
+        state = addNoFindingReviewChallenge(state);
+        state = {
+          ...state,
+          iteration: state.iteration + 1,
+        };
+        continue;
+      }
+
       return {
         summary: action.summary,
         riskLevel: action.riskLevel,

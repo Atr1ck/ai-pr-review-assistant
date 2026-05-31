@@ -91,7 +91,8 @@ Rules:
 - Inspect files before recording risks for them.
 - Suggestions must reference an existing riskId.
 - Do not create suggestions without risks.
-- Prefer false negatives over false positives.
+- Avoid unsupported findings, but record concrete low-severity review findings when the diff supports them.
+- Low-severity risks can include brittle error handling, missing validation, unclear API contracts, missing tests for changed behavior, or fragile state ordering.
 - Finish if there is not enough evidence for more risks.
 - Use inspect_files to inspect a batch of important files.
 - Prefer files with large changes, auth/security logic, API boundaries, data model changes, error handling, or deleted logic.
@@ -121,6 +122,7 @@ ${JSON.stringify(
     inspectedFiles: state.inspectedFiles,
     risks: state.risks,
     suggestions: state.suggestions,
+    messages: state.messages,
   },
   null,
   2,
