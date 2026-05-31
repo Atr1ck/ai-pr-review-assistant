@@ -3,8 +3,9 @@ import type { SubmitEvent } from 'react';
 import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './types/github';
 import { PatchViewer } from './components/PatchViewer';
+import { ReviewTimeline } from './components/ReviewTimeline';
 import { fetchReviewContext } from './api/review';
-import type { ReviewContext, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
+import type { ReviewContext, ReviewLoopAction, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
 
 function App() {
   const [prUrl, setprUrl] = useState('');
@@ -29,6 +30,7 @@ function App() {
   { id: 'review-loop', label: 'AI review loop', status: 'idle' },
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
+  const [loopActions, setLoopActions] = useState<ReviewLoopAction[]>([]);
 
   useEffect(() => {
       if (!isReviewRunning || reviewStartedAt === null) {
@@ -77,6 +79,10 @@ function App() {
         setReviewResult(payload.result);
       }
 
+      if (payload.type === 'loop_action') {
+        setLoopActions((actions) => [...actions, payload.action]);
+      }
+
       if (payload.type === 'heartbeat') {
         setStreamMessage(payload.message);
         setElapsedSeconds(Math.floor(payload.elapsedSeconds));
@@ -103,6 +109,7 @@ function App() {
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     setReviewResult(null);
+    setLoopActions([]);
     setPipelineSteps((steps) =>
       steps.map((step) => ({
         ...step,
@@ -376,6 +383,11 @@ function App() {
                 ))}
               </ol>
 
+              <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
+                Agent Timeline
+              </h3>
+              <ReviewTimeline actions={loopActions} />
+
               {reviewContext ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2 text-center text-sm">
@@ -449,7 +461,7 @@ function App() {
                   <strong className="text-slate-800">
                     {isBuildingContext ? 'Building context' : 'Context pending'}
                   </strong>
-                  <span>Review context will appear after PR files are loaded.</span>
+                  <span>Review context 将在 PR 文件加载后出现。</span>
                 </div>
               )}
             </aside>

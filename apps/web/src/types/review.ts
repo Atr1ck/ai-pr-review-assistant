@@ -74,6 +74,40 @@ export type ReviewResult = {
   suggestions: ReviewSuggestion[];
 };
 
+export type ReviewLoopAction =
+  | {
+      type: 'inspect_files';
+      files: string[];
+      reason: string;
+    }
+  | {
+      type: 'record_risk';
+      risk: {
+        id: string;
+        file: string;
+        level: 'low' | 'medium' | 'high';
+        type: string;
+        title: string;
+        reason: string;
+      };
+    }
+  | {
+      type: 'record_suggestion';
+      suggestion: {
+        id: string;
+        riskId: string;
+        file: string;
+        title: string;
+        comment: string;
+        suggestedChange: string;
+      };
+    }
+  | {
+      type: 'finish';
+      summary: string;
+      riskLevel: 'low' | 'medium' | 'high';
+    };
+
 export type ReviewPipelineEvent =
   | {
       type: 'step';
@@ -87,7 +121,7 @@ export type ReviewPipelineEvent =
     }
   | {
       type: 'loop_action';
-      action: unknown;
+      action: ReviewLoopAction;
     }
   | {
       type: 'done';

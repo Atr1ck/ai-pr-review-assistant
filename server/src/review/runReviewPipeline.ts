@@ -124,6 +124,8 @@ export async function runReviewPipeline({
     message: 'PR 元数据获取完成',
   });
 
+  await wait(400);
+  
     sendEvent(res, {
     type: 'step',
     step: 'fetch-files',
@@ -131,12 +133,16 @@ export async function runReviewPipeline({
     message: '更改文件获取完成',
   });
 
+  await wait(400);
+
   sendEvent(res, {
     type: 'step',
     step: 'build-context',
     status: 'completed',
     message: 'Review Context构建完成。',
   });
+
+  await wait(400);
 
   sendEvent(res, {
     type: 'step',
