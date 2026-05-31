@@ -45,6 +45,16 @@ function wait(ms: number) {
   });
 }
 
+function getChangedModules(context: Awaited<ReturnType<typeof buildReviewContext>>) {
+  return [
+    ...new Set(
+      context.files
+        .filter((file) => !file.ignored)
+        .map((file) => file.filename.split('/')[0] ?? file.filename),
+    ),
+  ].slice(0, 5);
+}
+
 export async function runReviewPipeline({
   owner,
   repo,
@@ -124,35 +134,32 @@ export async function runReviewPipeline({
     step: 'review-loop',
     status: 'running',
     message: 'AI reviewer is inspecting the PR...',
-    });
+  });
 
-    const loopResult = await runReviewLoop({
+  const loopResult = await runReviewLoop({
     context,
     onAction: (action) => {
-        sendEvent(res, {
+      sendEvent(res, {
         type: 'loop_action',
         action,
-        });
+      });
     },
-    });
+  });
 
-    sendEvent(res, {
+  sendEvent(res, {
     type: 'step',
     step: 'review-loop',
     status: 'completed',
     message: 'AI review loop completed.',
-    });
+  });
 
   sendEvent(res, {
     type: 'result',
     result: {
-        summary: loopResult.summary || summary,
-        riskLevel: loopResult.riskLevel,
-        changedModules: context.files
-        .filter((file) => !file.ignored)
-        .slice(0, 5)
-        .map((file) => file.filename.split('/')[0] ?? file.filename),
-        risks: loopResult.risks.map((risk) => ({
+      summary: loopResult.summary || summary,
+      riskLevel: loopResult.riskLevel,
+      changedModules: getChangedModules(context),
+      risks: loopResult.risks.map((risk) => ({
         file: risk.file,
         level: risk.level,
         type: risk.type,
@@ -162,8 +169,8 @@ export async function runReviewPipeline({
             loopResult.suggestions.find(
             (suggestion) => suggestion.riskId === risk.id,
             )?.suggestedChange ?? '',
-        })),
-        suggestions: loopResult.suggestions.map((suggestion) => ({
+      })),
+      suggestions: loopResult.suggestions.map((suggestion) => ({
         file: suggestion.file,
         riskTitle:
             loopResult.risks.find((risk) => risk.id === suggestion.riskId)?.title ??
@@ -171,9 +178,9 @@ export async function runReviewPipeline({
         title: suggestion.title,
         comment: suggestion.comment,
         suggestedChange: suggestion.suggestedChange,
-        })),
+      })),
     },
-    });
+  });
 
   sendEvent(res, {
     type: 'done',
