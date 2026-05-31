@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { SubmitEvent } from 'react';
+import type { MouseEvent, SubmitEvent } from 'react';
 import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './types/github';
 import { PatchViewer } from './components/PatchViewer';
 import { ReviewTimeline } from './components/ReviewTimeline';
 import { fetchReviewContext } from './api/review';
 import type { ReviewContext, ReviewLoopAction, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
+
+type ActivePanel = 'left' | 'center' | 'right' | null;
 
 function App() {
   const [prUrl, setprUrl] = useState('');
@@ -30,6 +32,8 @@ function App() {
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [loopActions, setLoopActions] = useState<ReviewLoopAction[]>([]);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
+  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
 
   useEffect(() => {
       if (!isReviewRunning || reviewStartedAt === null) {
@@ -88,6 +92,7 @@ function App() {
       }
       if (payload.type === 'done') {
         setIsReviewRunning(false);
+        setIsTimelineExpanded(false);
         eventSource.close();
       }
 
@@ -109,6 +114,7 @@ function App() {
     e.preventDefault();
     setReviewResult(null);
     setLoopActions([]);
+    setIsTimelineExpanded(true);
     setPipelineSteps((steps) =>
       steps.map((step) => ({
         ...step,
@@ -119,7 +125,7 @@ function App() {
     setIsReviewRunning(true);
     setReviewStartedAt(Date.now());
     setElapsedSeconds(0);
-    setStreamMessage('AI review is starting...');
+    setStreamMessage('AI review 正在启动...');
     setError(null);
     setParsedInfo(null);
     setPrMetadata(null);
@@ -148,7 +154,7 @@ function App() {
       const nextReviewContext = await fetchReviewContext(result);
       setReviewContext(nextReviewContext);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse PR URL');
+      setError(err instanceof Error ? err.message : '无法解析 PR URL');
     } finally {
       setIsparsing(false);
       setIsBuildingContext(false);
@@ -156,6 +162,36 @@ function App() {
   };
 
   const selectedFile = files.find((file) => file.filename === selectedFileName) || null;
+  const layoutClass =
+    activePanel === 'left'
+      ? 'xl:grid-cols-[420px_minmax(320px,1fr)_280px]'
+      : activePanel === 'center'
+        ? 'xl:grid-cols-[240px_minmax(620px,1.8fr)_280px]'
+        : activePanel === 'right'
+          ? 'xl:grid-cols-[240px_minmax(320px,1fr)_440px]'
+          : 'xl:grid-cols-[280px_minmax(360px,1fr)_340px]';
+
+  function togglePanel(panel: ActivePanel) {
+    setActivePanel((currentPanel) => (currentPanel === panel ? null : panel));
+  }
+
+  function handlePanelClick(event: MouseEvent<HTMLElement>, panel: ActivePanel) {
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const shouldIgnore = target.closest(
+      'button,a,input,textarea,select,pre,code,.card-hover,p,span,li,h2,h3',
+    );
+
+    if (shouldIgnore) {
+      return;
+    }
+
+    togglePanel(panel);
+  }
 
 
   return (
@@ -166,7 +202,7 @@ function App() {
             AI PR Review Assistant
           </h1>
           <p className="mt-2 text-slate-600">
-            Github PR 的可视化管线
+            Github PR 的可视化流程
           </p>
         </div>
 
@@ -196,8 +232,16 @@ function App() {
         </div>
       ) : null }
 
-      <section className="flex-1 grid gap-4 xl:grid-cols-[280px_minmax(360px,1fr)_340px]">
-        <aside className="min-h-130rounded-lg border border-slate-200 bg-white p-4">
+      <section
+        className={[
+          'grid flex-1 gap-4 transition-[grid-template-columns] duration-300 ease-out',
+          layoutClass,
+        ].join(' ')}
+      >
+        <aside
+          onClick={(event) => handlePanelClick(event, 'left')}
+          className="min-h-130rounded-lg border border-slate-200 bg-white p-4"
+        >
           <h2 className="mb-4 text-lg font-semibold">Pull Request</h2>
 
           {prMetadata && parsedInfo ? (
@@ -216,7 +260,7 @@ function App() {
                 </h3>
               </div>
 
-              <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              <div className="card-hover grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">State</span>
                   <span className="font-medium text-slate-900">{prMetadata.state}</span>
@@ -290,8 +334,8 @@ function App() {
             </div>
           ) : (
             <div className="grid gap-1 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              <strong className="text-slate-800">No PR loaded</strong>
-              <span>Enter a GitHub PR URL to start analysis.</span>
+              <strong className="text-slate-800">未加载 PR</strong>
+              <span>输入 GitHub PR URL 以开始分析。</span>
             </div>
           )}
 
@@ -309,7 +353,7 @@ function App() {
                           type="button"
                           onClick={() => setSelectedFileName(file.filename)}
                           className={[
-                            'w-full rounded-md border p-2 text-left transition',
+                            'card-hover w-full rounded-md border p-2 text-left transition',
                             isSelected
                               ? 'border-blue-200 bg-blue-50'
                               : 'border-slate-200 bg-white hover:bg-slate-50',
@@ -339,25 +383,30 @@ function App() {
                 </ul>
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                  Changed files will appear after analysis.
+                  更改的文件列表将显示在这里。
                 </div>
               )}
         </aside>
 
-        <PatchViewer file={selectedFile} />
+        <div onClick={(event) => handlePanelClick(event, 'center')}>
+          <PatchViewer file={selectedFile} />
+        </div>
 
-        <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
+        <aside
+          onClick={(event) => handlePanelClick(event, 'right')}
+          className="min-h-130 rounded-lg border border-slate-200 bg-white p-4"
+        >
           <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
               <h2 className="mb-4 text-lg font-semibold">AI Review 流程</h2>
               
               {isReviewRunning ? (
-                <div className="mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                  <div className="font-medium">AI review is running</div>
+                <div className="card-hover mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                  <div className="font-medium">AI review 正在进行中</div>
                   <div className="mt-1 text-xs">
                     {streamMessage || 'Waiting for review events...'}
                   </div>
                   <div className="mt-1 text-xs opacity-80">
-                    Elapsed: {elapsedSeconds}s
+                    已用时间: {elapsedSeconds}s
                   </div>
                 </div>
               ) : null}
@@ -382,10 +431,25 @@ function App() {
                 ))}
               </ol>
 
-              <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
-                Agent Timeline
-              </h3>
-              <ReviewTimeline actions={loopActions} />
+              <div className="mb-2 mt-6 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Agent Timeline
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsTimelineExpanded((value) => !value)}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                >
+                  {isTimelineExpanded ? '收起' : '展开'}
+                </button>
+              </div>
+              {isTimelineExpanded ? (
+                <ReviewTimeline actions={loopActions} />
+              ) : (
+                <div className="card-hover mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
+                  已收起 {loopActions.length} 个审查步骤。
+                </div>
+              )}
 
               {reviewContext ? (
                 <div className="space-y-3">
@@ -410,7 +474,7 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                  <div className="card-hover rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                     <div className="flex justify-between gap-3">
                       <span className="text-slate-500">Additions</span>
                       <span className="font-medium text-emerald-700">
@@ -432,8 +496,8 @@ function App() {
                   </div>
 
                   {reviewContext.stats.largeChange ? (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      大型 PR 检测到。AI 审查应优先考虑高风险文件。
+                    <div className="card-hover rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                      检测到大型 PR ，AI 审查应优先考虑高风险文件。
                     </div>
                   ) : null}
 
@@ -446,7 +510,7 @@ function App() {
                         {reviewContext.warnings.slice(0, 6).map((warning) => (
                           <li
                             key={warning}
-                            className="rounded-md border border-slate-200 bg-white p-2"
+                            className="card-hover rounded-md border border-slate-200 bg-white p-2"
                           >
                             {warning}
                           </li>
@@ -473,7 +537,7 @@ function App() {
               <div>
                 <span className="text-slate-500">风险等级</span>
                 <p className="mt-1 font-semibold text-slate-900">
-                  {reviewResult.riskLevel}
+                  {reviewResult.riskLevel === 'low' ? '低' : reviewResult.riskLevel === 'medium' ? '中' : '高'}
                 </p>
               </div>
 
@@ -491,13 +555,13 @@ function App() {
                     {reviewResult.risks.map((risk) => (
                       <div
                         key={`${risk.file}-${risk.title}`}
-                        className="rounded-md border border-slate-200 bg-white p-3"
+                        className="card-hover rounded-md border border-slate-200 bg-white p-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-medium text-slate-900">{risk.title}</p>
                             <p className="mt-1 text-xs text-slate-500">
-                              {risk.file} · {risk.type} · {risk.level}
+                              {risk.file} · {risk.type} · {risk.level === 'low' ? '低' : risk.level === 'medium' ? '中' : '高'}
                             </p>
                           </div>
                         </div>
@@ -517,7 +581,7 @@ function App() {
                     {reviewResult.suggestions.map((suggestion) => (
                       <div
                         key={`${suggestion.file}-${suggestion.title}`}
-                        className="rounded-md border border-blue-100 bg-blue-50 p-3"
+                        className="card-hover rounded-md border border-blue-100 bg-blue-50 p-3"
                       >
                         <p className="font-medium text-slate-900">{suggestion.title}</p>
 
