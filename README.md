@@ -1,5 +1,8 @@
 # AI PR Review Assistant
 
+⚠️ 后端部署在Render的免费计划下，长时间不使用会关闭项目，因此第一次解析时会卡住需要等待启动
+⚠️ 模型的API接入走的是RightCode中转站，可能会遇到中转站网络波动
+
 > Demo 视频：待补充
 
 AI PR Review Assistant 是一个可视化、流式、上下文感知的 GitHub Pull Request 代码评审工具。
@@ -13,7 +16,7 @@ AI PR Review Assistant 是一个可视化、流式、上下文感知的 GitHub P
 - GitHub PR URL 解析
 - GitHub PR metadata 获取
 - Changed files / patch 获取
-- Patch Viewer 基础高亮
+- Patch Viewer 高亮
 - Review Context 构建器
 - SSE 流式 Review Pipeline
 - PR Summary 生成
@@ -178,6 +181,7 @@ Context Builder 会做以下处理：
 - `express`
 - `cors`
 - `dotenv`
+- `highlight.js`
 
 主要开发依赖：
 

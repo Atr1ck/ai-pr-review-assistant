@@ -24,3 +24,38 @@
     transform: none;
   }
 }
+
+.patch-code .hljs-keyword,
+.patch-code .hljs-selector-tag,
+.patch-code .hljs-built_in {
+  color: #c4b5fd;
+}
+
+.patch-code .hljs-string,
+.patch-code .hljs-template-string,
+.patch-code .hljs-regexp {
+  color: #fde68a;
+}
+
+.patch-code .hljs-comment,
+.patch-code .hljs-quote {
+  color: #64748b;
+}
+
+.patch-code .hljs-number,
+.patch-code .hljs-literal {
+  color: #67e8f9;
+}
+
+.patch-code .hljs-title,
+.patch-code .hljs-function,
+.patch-code .hljs-section {
+  color: #93c5fd;
+}
+
+.patch-code .hljs-attr,
+.patch-code .hljs-attribute,
+.patch-code .hljs-property,
+.patch-code .hljs-variable {
+  color: #f9a8d4;
+}
