@@ -13,7 +13,7 @@ export async function fetchReviewContext(
   });
 
   const response = await fetch(
-    `${API_BASE_URL}/api/review/context?${searchParams.toString()}`,
+    `${API_BASE_URL}/review/context?${searchParams.toString()}`,
   );
 
   const data = await response.json();
