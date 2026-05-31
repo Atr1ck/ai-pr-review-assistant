@@ -35,7 +35,7 @@ function getHighestRiskLevel(risks: ReviewLoopRisk[]) {
 }
 
 function buildFallbackSummary(state: ReviewLoopState) {
-  return `Reviewed ${state.inspectedFiles.length} file(s) from this PR and found ${state.risks.length} risk(s).`;
+  return `Review loop reached its iteration limit after inspecting ${state.inspectedFiles.length} file(s). It found ${state.risks.length} risk(s) before stopping.`;
 }
 
 function createInitialState(context: ReviewContext): ReviewLoopState {
@@ -53,19 +53,19 @@ function applyAction(
   state: ReviewLoopState,
   action: ReviewLoopAction,
 ): ReviewLoopState {
-  if (action.type === 'inspect_file') {
-    if (state.inspectedFiles.includes(action.file)) {
-      return state;
-    }
+  if (action.type === 'inspect_files') {
+    const nextFiles = action.files.filter(
+      (file) => !state.inspectedFiles.includes(file),
+    );
 
     return {
       ...state,
-      inspectedFiles: [...state.inspectedFiles, action.file],
+      inspectedFiles: [...state.inspectedFiles, ...nextFiles],
       messages: [
         ...state.messages,
         {
           role: 'assistant',
-          content: `Inspect file: ${action.file}. Reason: ${action.reason}`,
+          content: `Inspect files: ${nextFiles.join(', ')}. Reason: ${action.reason}`,
         },
       ],
     };
@@ -117,7 +117,6 @@ function applyAction(
 function shouldForceFinish(state: ReviewLoopState) {
   return (
     state.iteration >= REVIEW_LOOP_LIMITS.maxIterations ||
-    state.inspectedFiles.length >= REVIEW_LOOP_LIMITS.maxInspectedFiles ||
     state.risks.length >= REVIEW_LOOP_LIMITS.maxRisks ||
     state.suggestions.length >= REVIEW_LOOP_LIMITS.maxSuggestions
   );
