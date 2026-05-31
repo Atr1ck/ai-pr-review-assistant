@@ -11,6 +11,7 @@
     - `https://github.com/Atr1ck/ai-pr-review-assistant/pull/12`
     - `https://github.com/saadeghi/daisyui/pull/4432`
     - `https://github.com/ant-design/ant-design/pull/58157`
+- 项目地址:https://ai-pr-review-assistant-web.vercel.app/
 
 本项目选择题目：**AI PR Review 助手**。
 
