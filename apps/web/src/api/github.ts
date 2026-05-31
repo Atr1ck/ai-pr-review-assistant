@@ -1,11 +1,8 @@
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile } from '../types/github';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ??
-  (import.meta.env.DEV ? 'http://localhost:3001' : '');
+import { buildApiUrl } from './base';
 
 export async function parsePRUrl(url: string): Promise<ParsedPRInfo> {
-    const response = await fetch(`${API_BASE_URL}/github/parse-pr-url`, {
+    const response = await fetch(buildApiUrl('/api/github/parse-pr-url'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -29,7 +26,7 @@ export async function fetchPRMetadata(parsedInfo: ParsedPRInfo): Promise<PullReq
         pullNumber: parsedInfo.prNumber.toString(),
     });
 
-    const response = await fetch(`${API_BASE_URL}/github/pull-request?${searchParams}`);
+    const response = await fetch(buildApiUrl(`/api/github/pull-request?${searchParams}`));
     const data = await response.json();
 
     if (!response.ok) {
@@ -49,7 +46,7 @@ export async function fetchPullRequestFiles(
   });
 
   const response = await fetch(
-    `${API_BASE_URL}/github/pull-request/files?${searchParams.toString()}`,
+    buildApiUrl(`/api/github/pull-request/files?${searchParams.toString()}`),
   );
 
   const data = await response.json();

@@ -5,6 +5,7 @@ import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './type
 import { PatchViewer } from './components/PatchViewer';
 import { ReviewTimeline } from './components/ReviewTimeline';
 import { fetchReviewContext } from './api/review';
+import { buildApiUrl } from './api/base';
 import type { ReviewContext, ReviewLoopAction, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
 
 function App() {
@@ -31,9 +32,6 @@ function App() {
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [loopActions, setLoopActions] = useState<ReviewLoopAction[]>([]);
-  const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL ??
-    (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
   useEffect(() => {
       if (!isReviewRunning || reviewStartedAt === null) {
@@ -56,7 +54,7 @@ function App() {
     });
 
     const eventSource = new EventSource(
-      `${apiBaseUrl}/api/review/stream?${searchParams.toString()}`,
+      buildApiUrl(`/api/review/stream?${searchParams.toString()}`),
     );
 
     eventSource.onmessage = (event) => {
