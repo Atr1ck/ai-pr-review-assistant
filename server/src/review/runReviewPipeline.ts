@@ -1,8 +1,7 @@
 import type { Response } from 'express';
 import { buildReviewContext } from './buildReviewContext.js';
 import { generatePrSummary } from './generatePrSummary.js';
-import { generateDetectRisks } from './generateDetectRisks.js';
-import { generateReviewSuggestions } from './generateReviewSuggestions.js';
+import { runReviewLoop } from './runReviewLoop.js';
 
 type RunReviewPipelineInput = {
   owner: string;
@@ -27,6 +26,10 @@ type PipelineEvent =
         risks: unknown[];
         suggestions: unknown[];
       };
+    }
+  | {
+        type: 'loop_action';
+        action: unknown;
     }
   | {
       type: 'done';
@@ -118,51 +121,59 @@ export async function runReviewPipeline({
 
   sendEvent(res, {
     type: 'step',
-    step: 'detect-risks',
+    step: 'review-loop',
     status: 'running',
-    message: '检测潜在风险...',
-  });
+    message: 'AI reviewer is inspecting the PR...',
+    });
 
-    const riskResult = await generateDetectRisks(context);
-
-  sendEvent(res, {
-    type: 'step',
-    step: 'detect-risks',
-    status: 'completed',
-    message: '风险检测完成。',
-  });
-
-  sendEvent(res, {
-    type: 'step',
-    step: 'generate-suggestions',
-    status: 'running',
-    message: '生成Review建议...',
-  });
-
-    const suggestions = await generateReviewSuggestions(
-    riskResult.risks
-  );
+    const loopResult = await runReviewLoop({
+    context,
+    onAction: (action) => {
+        sendEvent(res, {
+        type: 'loop_action',
+        action,
+        });
+    },
+    });
 
     sendEvent(res, {
     type: 'step',
-    step: 'generate-suggestions',
+    step: 'review-loop',
     status: 'completed',
-    message: 'Review建议生成完成。',
-  });
+    message: 'AI review loop completed.',
+    });
 
   sendEvent(res, {
     type: 'result',
     result: {
-      summary: summary,
-      riskLevel: riskResult.riskLevel,
-      changedModules: context.files
+        summary: loopResult.summary || summary,
+        riskLevel: loopResult.riskLevel,
+        changedModules: context.files
         .filter((file) => !file.ignored)
         .slice(0, 5)
         .map((file) => file.filename.split('/')[0] ?? file.filename),
-      risks: riskResult.risks,
-      suggestions: suggestions,
+        risks: loopResult.risks.map((risk) => ({
+        file: risk.file,
+        level: risk.level,
+        type: risk.type,
+        title: risk.title,
+        reason: risk.reason,
+        suggestion:
+            loopResult.suggestions.find(
+            (suggestion) => suggestion.riskId === risk.id,
+            )?.suggestedChange ?? '',
+        })),
+        suggestions: loopResult.suggestions.map((suggestion) => ({
+        file: suggestion.file,
+        riskTitle:
+            loopResult.risks.find((risk) => risk.id === suggestion.riskId)?.title ??
+            suggestion.riskId,
+        title: suggestion.title,
+        comment: suggestion.comment,
+        suggestedChange: suggestion.suggestedChange,
+        })),
     },
-  });
+    });
 
   sendEvent(res, {
     type: 'done',
