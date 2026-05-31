@@ -30,6 +30,7 @@ function App() {
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [loopActions, setLoopActions] = useState<ReviewLoopAction[]>([]);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
 
   useEffect(() => {
       if (!isReviewRunning || reviewStartedAt === null) {
@@ -88,6 +89,7 @@ function App() {
       }
       if (payload.type === 'done') {
         setIsReviewRunning(false);
+        setIsTimelineExpanded(false);
         eventSource.close();
       }
 
@@ -109,6 +111,7 @@ function App() {
     e.preventDefault();
     setReviewResult(null);
     setLoopActions([]);
+    setIsTimelineExpanded(true);
     setPipelineSteps((steps) =>
       steps.map((step) => ({
         ...step,
@@ -382,10 +385,25 @@ function App() {
                 ))}
               </ol>
 
-              <h3 className="mb-2 mt-6 text-sm font-semibold text-slate-700">
-                Agent Timeline
-              </h3>
-              <ReviewTimeline actions={loopActions} />
+              <div className="mb-2 mt-6 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Agent Timeline
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsTimelineExpanded((value) => !value)}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                >
+                  {isTimelineExpanded ? '收起' : '展开'}
+                </button>
+              </div>
+              {isTimelineExpanded ? (
+                <ReviewTimeline actions={loopActions} />
+              ) : (
+                <div className="card-hover mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
+                  已收起 {loopActions.length} 个审查步骤。
+                </div>
+              )}
 
               {reviewContext ? (
                 <div className="space-y-3">
