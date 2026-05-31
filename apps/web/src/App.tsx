@@ -55,7 +55,7 @@ function App() {
     });
 
     const eventSource = new EventSource(
-      `${apiBaseUrl}/api/review/stream?${searchParams.toString()}`,
+      `${apiBaseUrl}/review/stream?${searchParams.toString()}`,
     );
 
     eventSource.onmessage = (event) => {
