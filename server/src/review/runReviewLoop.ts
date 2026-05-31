@@ -122,6 +122,14 @@ function shouldForceFinish(state: ReviewLoopState) {
   );
 }
 
+function getRisksWithoutSuggestions(state: ReviewLoopState) {
+  const suggestedRiskIds = new Set(
+    state.suggestions.map((suggestion) => suggestion.riskId),
+  );
+
+  return state.risks.filter((risk) => !suggestedRiskIds.has(risk.id));
+}
+
 function hasNoFindingReviewChallenge(state: ReviewLoopState) {
   return state.messages.some((message) =>
     message.content.includes('no-finding-review-challenge'),
@@ -155,6 +163,38 @@ function addNoFindingReviewChallenge(state: ReviewLoopState): ReviewLoopState {
   };
 }
 
+function shouldChallengeMissingSuggestionsFinish(
+  state: ReviewLoopState,
+  action: ReviewLoopAction,
+) {
+  return (
+    action.type === 'finish' &&
+    getRisksWithoutSuggestions(state).length > 0 &&
+    state.iteration < REVIEW_LOOP_LIMITS.maxIterations - 1
+  );
+}
+
+function addMissingSuggestionsChallenge(
+  state: ReviewLoopState,
+): ReviewLoopState {
+  const risksWithoutSuggestions = getRisksWithoutSuggestions(state);
+
+  return {
+    ...state,
+    messages: [
+      ...state.messages,
+      {
+        role: 'tool',
+        content: `missing-suggestions-challenge: You are trying to finish while some risks do not have related suggestions. Generate record_suggestion actions for these risks before finishing. Risks without suggestions: ${JSON.stringify(
+          risksWithoutSuggestions,
+          null,
+          2,
+        )}`,
+      },
+    ],
+  };
+}
+
 export async function runReviewLoop({
   context,
   onAction,
@@ -171,6 +211,15 @@ export async function runReviewLoop({
     if (action.type === 'finish') {
       if (shouldChallengeNoFindingFinish(state, action)) {
         state = addNoFindingReviewChallenge(state);
+        state = {
+          ...state,
+          iteration: state.iteration + 1,
+        };
+        continue;
+      }
+
+      if (shouldChallengeMissingSuggestionsFinish(state, action)) {
+        state = addMissingSuggestionsChallenge(state);
         state = {
           ...state,
           iteration: state.iteration + 1,

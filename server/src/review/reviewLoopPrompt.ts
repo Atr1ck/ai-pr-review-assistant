@@ -91,6 +91,8 @@ Rules:
 - Inspect files before recording risks for them.
 - Suggestions must reference an existing riskId.
 - Do not create suggestions without risks.
+- Before finishing, every recorded risk must have a related suggestion.
+- If there are risks without suggestions, choose record_suggestion before finish.
 - Avoid unsupported findings, but record concrete low-severity review findings when the diff supports them.
 - Low-severity risks can include brittle error handling, missing validation, unclear API contracts, missing tests for changed behavior, or fragile state ordering.
 - Finish if there is not enough evidence for more risks.

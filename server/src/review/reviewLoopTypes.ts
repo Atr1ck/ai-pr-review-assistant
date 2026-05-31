@@ -58,7 +58,7 @@ export const REVIEW_LOOP_LIMITS = {
   maxIterations: 10,
   maxRisks: 6,
   maxSuggestions: 6,
-  maxFilesPerInspection: 5,
+  maxFilesPerInspection: 7,
 } as const;
 
 export function getMaxInspectedFiles(totalFiles: number) {

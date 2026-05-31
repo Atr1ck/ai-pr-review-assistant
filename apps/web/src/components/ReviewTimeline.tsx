@@ -76,7 +76,8 @@ export function ReviewTimeline({ actions }: ReviewTimelineProps) {
   if (actions.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500 m-4">
-        Review loop actions will appear here.
+        Review 循环的每个步骤都会在这里显示。
+        
       </div>
     );
   }
