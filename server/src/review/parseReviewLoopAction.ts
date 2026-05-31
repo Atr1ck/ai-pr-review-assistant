@@ -2,6 +2,10 @@ import type {
   ReviewLoopAction,
   ReviewLoopState,
 } from './reviewLoopTypes.js';
+import {
+  REVIEW_LOOP_LIMITS,
+  getMaxInspectedFiles,
+} from './reviewLoopTypes.js';
 
 function parseJsonObject(text: string) {
   const trimmed = text.trim();
@@ -32,6 +36,19 @@ function assertString(value: unknown, field: string): asserts value is string {
   }
 }
 
+function assertStringArray(
+  value: unknown,
+  field: string,
+): asserts value is string[] {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.some((item) => typeof item !== 'string' || item.trim().length === 0)
+  ) {
+    throw new Error(`${field} must be a non-empty string array`);
+  }
+}
+
 function assertKnownFile(state: ReviewLoopState, file: string) {
   const exists = state.context.files.some(
     (contextFile) => contextFile.filename === file && !contextFile.ignored,
@@ -50,6 +67,12 @@ function assertKnownRisk(state: ReviewLoopState, riskId: string) {
   }
 }
 
+function assertInspectedFile(state: ReviewLoopState, file: string) {
+  if (!state.inspectedFiles.includes(file)) {
+    throw new Error(`File must be inspected before recording findings: ${file}`);
+  }
+}
+
 export function parseReviewLoopAction(
   text: string,
   state: ReviewLoopState,
@@ -59,14 +82,48 @@ export function parseReviewLoopAction(
 
   assertString(parsed.type, 'type');
 
-  if (parsed.type === 'inspect_file') {
-    assertString(parsed.file, 'file');
+  if (parsed.type === 'inspect_files') {
+    assertStringArray(parsed.files, 'files');
     assertString(parsed.reason, 'reason');
-    assertKnownFile(state, parsed.file);
+
+    const uniqueFiles = [...new Set(parsed.files)];
+    const reviewableFileCount = state.context.files.filter(
+      (file) => !file.ignored,
+    ).length;
+    const maxInspectedFiles = getMaxInspectedFiles(reviewableFileCount);
+    const remainingInspectionSlots = maxInspectedFiles - state.inspectedFiles.length;
+
+    if (uniqueFiles.length !== parsed.files.length) {
+      throw new Error('inspect_files cannot include duplicate files');
+    }
+
+    if (uniqueFiles.length > REVIEW_LOOP_LIMITS.maxFilesPerInspection) {
+      throw new Error(
+        `inspect_files can include at most ${REVIEW_LOOP_LIMITS.maxFilesPerInspection} files`,
+      );
+    }
+
+    if (remainingInspectionSlots <= 0) {
+      throw new Error('File inspection limit reached');
+    }
+
+    if (uniqueFiles.length > remainingInspectionSlots) {
+      throw new Error(
+        `inspect_files exceeds remaining inspection slots: ${remainingInspectionSlots}`,
+      );
+    }
+
+    for (const file of uniqueFiles) {
+      assertKnownFile(state, file);
+
+      if (state.inspectedFiles.includes(file)) {
+        throw new Error(`File already inspected: ${file}`);
+      }
+    }
 
     return {
-      type: 'inspect_file',
-      file: parsed.file,
+      type: 'inspect_files',
+      files: uniqueFiles,
       reason: parsed.reason,
     };
   }
@@ -82,6 +139,7 @@ export function parseReviewLoopAction(
     assertString(parsed.risk.reason, 'risk.reason');
 
     assertKnownFile(state, parsed.risk.file);
+    assertInspectedFile(state, parsed.risk.file);
 
     if (!['low', 'medium', 'high'].includes(parsed.risk.level)) {
       throw new Error('risk.level must be low, medium or high');
@@ -111,6 +169,7 @@ export function parseReviewLoopAction(
     assertString(parsed.suggestion.suggestedChange, 'suggestion.suggestedChange');
 
     assertKnownFile(state, parsed.suggestion.file);
+    assertInspectedFile(state, parsed.suggestion.file);
     assertKnownRisk(state, parsed.suggestion.riskId);
 
     return {

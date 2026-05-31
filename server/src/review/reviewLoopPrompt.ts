@@ -1,5 +1,6 @@
 import {
   REVIEW_LOOP_LIMITS,
+  getMaxInspectedFiles,
   type ReviewLoopState,
 } from './reviewLoopTypes.js';
 
@@ -26,6 +27,16 @@ function buildInspectedFilePatches(state: ReviewLoopState) {
 }
 
 export function buildReviewLoopPrompt(state: ReviewLoopState) {
+  const reviewableFileCount = state.context.files.filter(
+    (file) => !file.ignored,
+  ).length;
+  const maxInspectedFiles = getMaxInspectedFiles(reviewableFileCount);
+  const remainingInspectionSlots = Math.max(
+    maxInspectedFiles - state.inspectedFiles.length,
+    0,
+  );
+  const canInspectMore = remainingInspectionSlots > 0;
+
   return `You are an AI engineer reviewing a GitHub pull request.
 
 You must choose exactly ONE next action.
@@ -34,11 +45,11 @@ Return ONLY valid JSON. Do not include markdown.
 
 Available actions:
 
-1. Inspect a file:
+1. Inspect a batch of files:
 {
-  "type": "inspect_file",
-  "file": "path/to/file.ts",
-  "reason": "why this file should be inspected"
+  "type": "inspect_files",
+  "files": ["path/to/file.ts", "path/to/another-file.ts"],
+  "reason": "why these files should be inspected"
 }
 
 2. Record a risk:
@@ -77,13 +88,24 @@ Available actions:
 Rules:
 - Choose only one action.
 - Do not invent files.
-- Inspect a file before recording a risk for it.
+- Inspect files before recording risks for them.
 - Suggestions must reference an existing riskId.
 - Do not create suggestions without risks.
-- Prefer false negatives over false positives.
+- Avoid unsupported findings, but record concrete low-severity review findings when the diff supports them.
+- Low-severity risks can include brittle error handling, missing validation, unclear API contracts, missing tests for changed behavior, or fragile state ordering.
 - Finish if there is not enough evidence for more risks.
+- Use inspect_files to inspect a batch of important files.
+- Prefer files with large changes, auth/security logic, API boundaries, data model changes, error handling, or deleted logic.
+- For small PRs, inspect all reviewable files.
+- For large PRs, prioritize high-risk files and mention coverage limits in the finish summary.
+- You may inspect at most ${REVIEW_LOOP_LIMITS.maxFilesPerInspection} files in one inspect_files action.
+- Reviewable files: ${reviewableFileCount}
+- Maximum files to inspect for this PR: ${maxInspectedFiles}
+- Remaining inspection slots: ${remainingInspectionSlots}
+${canInspectMore
+  ? '- You may inspect more files if they are likely to contain risk.'
+  : '- You have reached the file inspection limit. Do not use inspect_files anymore. You must record_risk, record_suggestion, or finish.'}
 - Maximum iterations: ${REVIEW_LOOP_LIMITS.maxIterations}
-- Maximum inspected files: ${REVIEW_LOOP_LIMITS.maxInspectedFiles}
 - Maximum risks: ${REVIEW_LOOP_LIMITS.maxRisks}
 - Maximum suggestions: ${REVIEW_LOOP_LIMITS.maxSuggestions}
 - Use Chinese for the response.
@@ -100,6 +122,7 @@ ${JSON.stringify(
     inspectedFiles: state.inspectedFiles,
     risks: state.risks,
     suggestions: state.suggestions,
+    messages: state.messages,
   },
   null,
   2,

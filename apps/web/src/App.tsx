@@ -23,7 +23,7 @@ function App() {
   { id: 'fetch-files', label: 'Fetch changed files', status: 'idle' },
   { id: 'build-context', label: 'Build review context', status: 'idle' },
   { id: 'generate-summary', label: 'Generate PR summary', status: 'idle' },
-  { id: 'detect-risks', label: 'Detect risky changes', status: 'idle' },
+  { id: 'review-loop', label: 'AI review loop', status: 'idle' },
   { id: 'generate-suggestions', label: 'Generate review suggestions', status: 'idle' },
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);

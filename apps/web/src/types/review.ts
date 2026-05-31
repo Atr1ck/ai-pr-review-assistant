@@ -86,10 +86,13 @@ export type ReviewPipelineEvent =
       result: ReviewResult;
     }
   | {
+      type: 'loop_action';
+      action: unknown;
+    }
+  | {
       type: 'done';
     }
   | {
       type: 'error';
       error: string;
     };
-
