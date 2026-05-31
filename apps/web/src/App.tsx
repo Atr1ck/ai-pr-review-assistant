@@ -7,6 +7,8 @@ import { ReviewTimeline } from './components/ReviewTimeline';
 import { fetchReviewContext } from './api/review';
 import type { ReviewContext, ReviewLoopAction, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
 
+type ActivePanel = 'left' | 'center' | 'right' | null;
+
 function App() {
   const [prUrl, setprUrl] = useState('');
   const [parsedInfo, setParsedInfo] = useState<ParsedPRInfo | null>(null);
@@ -31,6 +33,7 @@ function App() {
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [loopActions, setLoopActions] = useState<ReviewLoopAction[]>([]);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
+  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
 
   useEffect(() => {
       if (!isReviewRunning || reviewStartedAt === null) {
@@ -159,6 +162,18 @@ function App() {
   };
 
   const selectedFile = files.find((file) => file.filename === selectedFileName) || null;
+  const layoutClass =
+    activePanel === 'left'
+      ? 'xl:grid-cols-[420px_minmax(320px,1fr)_280px]'
+      : activePanel === 'center'
+        ? 'xl:grid-cols-[240px_minmax(620px,1.8fr)_280px]'
+        : activePanel === 'right'
+          ? 'xl:grid-cols-[240px_minmax(320px,1fr)_440px]'
+          : 'xl:grid-cols-[280px_minmax(360px,1fr)_340px]';
+
+  function togglePanel(panel: ActivePanel) {
+    setActivePanel((currentPanel) => (currentPanel === panel ? null : panel));
+  }
 
 
   return (
@@ -199,8 +214,16 @@ function App() {
         </div>
       ) : null }
 
-      <section className="flex-1 grid gap-4 xl:grid-cols-[280px_minmax(360px,1fr)_340px]">
-        <aside className="min-h-130rounded-lg border border-slate-200 bg-white p-4">
+      <section
+        className={[
+          'grid flex-1 gap-4 transition-[grid-template-columns] duration-300 ease-out',
+          layoutClass,
+        ].join(' ')}
+      >
+        <aside
+          onClick={() => togglePanel('left')}
+          className="min-h-130rounded-lg border border-slate-200 bg-white p-4"
+        >
           <h2 className="mb-4 text-lg font-semibold">Pull Request</h2>
 
           {prMetadata && parsedInfo ? (
@@ -347,9 +370,14 @@ function App() {
               )}
         </aside>
 
-        <PatchViewer file={selectedFile} />
+        <div onClick={() => togglePanel('center')}>
+          <PatchViewer file={selectedFile} />
+        </div>
 
-        <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
+        <aside
+          onClick={() => togglePanel('right')}
+          className="min-h-130 rounded-lg border border-slate-200 bg-white p-4"
+        >
           <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
               <h2 className="mb-4 text-lg font-semibold">AI Review 流程</h2>
               
