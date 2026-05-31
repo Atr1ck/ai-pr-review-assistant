@@ -1,7 +1,7 @@
 import type { ParsedPRInfo } from '../types/github';
 import type { ReviewContext } from '../types/review';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api';
 
 export async function fetchReviewContext(
   parsedPr: ParsedPRInfo,
