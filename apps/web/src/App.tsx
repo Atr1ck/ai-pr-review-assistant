@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SubmitEvent } from 'react';
 import { parsePRUrl, fetchPRMetadata, fetchPullRequestFiles } from './api/github';
 import type { ParsedPRInfo, PullRequestMetadata, PullRequestFile, } from './types/github';
 import { PatchViewer } from './components/PatchViewer';
 import { fetchReviewContext } from './api/review';
 import type { ReviewContext, ReviewPipelineStep, ReviewResult, ReviewPipelineEvent} from './types/review';
-
 
 function App() {
   const [prUrl, setprUrl] = useState('');
@@ -18,16 +17,32 @@ function App() {
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [reviewContext, setReviewContext] = useState<ReviewContext | null>(null);
   const [isBuildingContext, setIsBuildingContext] = useState(false);
+  const [isReviewRunning, setIsReviewRunning] = useState(false);
+  const [streamMessage, setStreamMessage] = useState('');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [reviewStartedAt, setReviewStartedAt] = useState<number | null>(null);
   const [pipelineSteps, setPipelineSteps] = useState<ReviewPipelineStep[]>([
   { id: 'fetch-metadata', label: 'Fetch PR metadata', status: 'idle' },
   { id: 'fetch-files', label: 'Fetch changed files', status: 'idle' },
   { id: 'build-context', label: 'Build review context', status: 'idle' },
   { id: 'generate-summary', label: 'Generate PR summary', status: 'idle' },
   { id: 'review-loop', label: 'AI review loop', status: 'idle' },
-  { id: 'generate-suggestions', label: 'Generate review suggestions', status: 'idle' },
 ]);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
 
+  useEffect(() => {
+      if (!isReviewRunning || reviewStartedAt === null) {
+        return;
+      }
+
+      const timer = window.setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - reviewStartedAt) / 1000));
+      }, 1000);
+
+      return () => {
+        window.clearInterval(timer);
+      };
+  }, [isReviewRunning, reviewStartedAt]);
   function runReviewStream(parsedPr: ParsedPRInfo) {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -62,17 +77,24 @@ function App() {
         setReviewResult(payload.result);
       }
 
+      if (payload.type === 'heartbeat') {
+        setStreamMessage(payload.message);
+        setElapsedSeconds(Math.floor(payload.elapsedSeconds));
+      }
       if (payload.type === 'done') {
+        setIsReviewRunning(false);
         eventSource.close();
       }
 
       if (payload.type === 'error') {
+        setIsReviewRunning(false);
         setError(payload.error);
         eventSource.close();
       }
     };
 
     eventSource.onerror = () => {
+      setIsReviewRunning(false);
       setError('Review stream connection failed');
       eventSource.close();
     };
@@ -88,6 +110,10 @@ function App() {
         message: undefined,
       })),
     );
+    setIsReviewRunning(true);
+    setReviewStartedAt(Date.now());
+    setElapsedSeconds(0);
+    setStreamMessage('AI review is starting...');
     setError(null);
     setParsedInfo(null);
     setPrMetadata(null);
@@ -317,7 +343,18 @@ function App() {
         <aside className="min-h-130 rounded-lg border border-slate-200 bg-white p-4">
           <aside className="min-h-[520px] rounded-lg border border-slate-200 bg-white p-4">
               <h2 className="mb-4 text-lg font-semibold">AI Review 流程</h2>
-
+              
+              {isReviewRunning ? (
+                <div className="mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                  <div className="font-medium">AI review is running</div>
+                  <div className="mt-1 text-xs">
+                    {streamMessage || 'Waiting for review events...'}
+                  </div>
+                  <div className="mt-1 text-xs opacity-80">
+                    Elapsed: {elapsedSeconds}s
+                  </div>
+                </div>
+              ) : null}
               <ol className="space-y-2 text-sm mb-3">
                 {pipelineSteps.map((step) => (
                   <li
