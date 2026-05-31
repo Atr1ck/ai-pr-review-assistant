@@ -1,6 +1,5 @@
 import type { Response } from 'express';
 import { buildReviewContext } from './buildReviewContext.js';
-import { generatePrSummary } from './generatePrSummary.js';
 import { runReviewLoop } from './runReviewLoop.js';
 
 type RunReviewPipelineInput = {
@@ -146,22 +145,6 @@ export async function runReviewPipeline({
 
   sendEvent(res, {
     type: 'step',
-    step: 'generate-summary',
-    status: 'running',
-    message: '正在调用模型生成 PR 摘要，可能需要一些时间...',
-  });
-
-  const summary = await generatePrSummary(context);
-
-  sendEvent(res, {
-    type: 'step',
-    step: 'generate-summary',
-    status: 'completed',
-    message: '生成 PR 摘要完成。',
-  });
-
-  sendEvent(res, {
-    type: 'step',
     step: 'review-loop',
     status: 'running',
     message: 'AI 正在审查文件变更，可能需要多轮模型调用...',
@@ -187,7 +170,7 @@ export async function runReviewPipeline({
   sendEvent(res, {
     type: 'result',
     result: {
-      summary: loopResult.summary || summary,
+      summary: loopResult.summary,
       riskLevel: loopResult.riskLevel,
       changedModules: getChangedModules(context),
       risks: loopResult.risks.map((risk) => ({
