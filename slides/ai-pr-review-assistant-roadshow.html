@@ -1,0 +1,1924 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI PR Review Assistant Roadshow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      /* === THEME VARIABLES === */
+      :root {
+        --stage-bg: #111111;
+        --slide-bg: #fdfae7;
+        --bg: #fdfae7;
+        --primary: #1e2bfa;
+        --text: #111111;
+        --text-muted: #666666;
+        --text-light: #969696;
+        --accent-light: rgba(30, 43, 250, 0.08);
+        --accent-medium: rgba(30, 43, 250, 0.15);
+        --border: rgba(30, 43, 250, 0.22);
+        --card-bg: rgba(30, 43, 250, 0.045);
+        --positive: #059669;
+        --negative: #dc2626;
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* === RESET === */
+      * {
+        box-sizing: border-box;
+      }
+
+      /* ===========================================
+         FIXED 16:9 STAGE: MANDATORY BASE STYLES
+         Include this ENTIRE file in every presentation.
+         Slides are authored at 1920×1080 and scaled as a whole.
+         =========================================== */
+
+      /* 1. Lock the browser viewport */
+      html,
+      body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          overflow: hidden;
+          background: var(--stage-bg, #000);
+      }
+
+      /* 2. Full-window deck viewport */
+      .deck-viewport {
+          position: fixed;
+          inset: 0;
+          overflow: hidden;
+          background: var(--stage-bg, #000);
+      }
+
+      /* 3. Fixed 16:9 design canvas.
+         JavaScript sets transform: translate(...) scale(...). */
+      .deck-stage {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          transform-origin: 0 0;
+          background: var(--slide-bg, #fff);
+      }
+
+      /* 4. Slides stack inside the fixed stage.
+         Content must be laid out at 1920×1080, not reflowed per device. */
+      .slide {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          display: block;
+          visibility: hidden;
+          opacity: 0;
+          pointer-events: none;
+          background: var(--slide-bg, #fff);
+      }
+
+      .slide.active,
+      .slide.visible {
+          visibility: visible;
+          opacity: 1;
+          pointer-events: auto;
+          z-index: 1;
+      }
+
+      /* 5. Keep media inside authored slide bounds */
+      img,
+      video,
+      canvas,
+      svg {
+          max-width: 100%;
+          max-height: 100%;
+      }
+
+      /* 6. Presentation chrome stays outside the slide design system */
+      .deck-controls {
+          position: fixed;
+          left: 50%;
+          bottom: 22px;
+          transform: translateX(-50%);
+          z-index: 1000;
+      }
+
+      /* 7. Print one fixed-size slide per page */
+      @media print {
+          html,
+          body {
+              width: 1920px;
+              height: auto;
+              overflow: visible;
+              background: #fff;
+          }
+
+          .deck-viewport {
+              position: static;
+              overflow: visible;
+              background: #fff;
+          }
+
+          .deck-stage {
+              position: static;
+              width: auto;
+              height: auto;
+              transform: none !important;
+              background: none;
+          }
+
+          .slide {
+              position: relative;
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              pointer-events: auto !important;
+              width: 1920px;
+              height: 1080px;
+              break-after: page;
+              page-break-after: always;
+          }
+
+          .slide:last-child {
+              break-after: auto;
+              page-break-after: auto;
+          }
+
+          .deck-controls {
+              display: none !important;
+          }
+      }
+
+      /* 8. Reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+              animation-duration: 0.01ms !important;
+              transition-duration: 0.2s !important;
+          }
+      }
+
+      /* === BASE TYPOGRAPHY === */
+      body {
+        font-family: "Inter", "Noto Sans SC", sans-serif;
+        color: var(--text);
+      }
+
+      h1,
+      h2,
+      h3,
+      .mono,
+      .tag,
+      .slide-num,
+      .metric-value {
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 92px;
+        line-height: 0.98;
+        letter-spacing: -0.03em;
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: 58px;
+        line-height: 1.05;
+        letter-spacing: -0.026em;
+        font-weight: 650;
+      }
+
+      h3 {
+        font-size: 30px;
+        line-height: 1.18;
+        letter-spacing: -0.015em;
+        font-weight: 620;
+      }
+
+      p,
+      li {
+        color: var(--text-muted);
+        font-size: 25px;
+        line-height: 1.54;
+      }
+
+      ul,
+      ol {
+        margin: 0;
+        padding-left: 30px;
+      }
+
+      li + li {
+        margin-top: 14px;
+      }
+
+      b,
+      strong {
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      /* === SLIDE SHELL === */
+      .slide {
+        padding: 72px 82px 92px;
+        transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+        transform: translateX(40px);
+      }
+
+      .slide.visible {
+        transform: translateX(0);
+      }
+
+      .slide-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 32px;
+        margin-bottom: 30px;
+      }
+
+      .eyebrow {
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        color: var(--primary);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        height: 36px;
+        border-radius: 999px;
+        background: var(--accent-light);
+        color: var(--primary);
+        padding: 0 20px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .accent-line {
+        width: 78px;
+        height: 5px;
+        background: var(--primary);
+        border-radius: 6px;
+      }
+
+      .slide-num {
+        position: absolute;
+        left: 82px;
+        bottom: 46px;
+        color: var(--text-muted);
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+
+      .stage-note {
+        position: absolute;
+        right: 82px;
+        bottom: 46px;
+        color: var(--text-light);
+        font-size: 16px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 28px;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .card {
+        border: 1.5px solid var(--border);
+        border-radius: 18px;
+        background: var(--card-bg);
+        padding: 30px 34px;
+      }
+
+      .card h3 {
+        margin-bottom: 18px;
+      }
+
+      .card p {
+        font-size: 24px;
+      }
+
+      .card.small p,
+      .card.small li {
+        font-size: 21px;
+      }
+
+      .compact-list li {
+        font-size: 22px;
+        line-height: 1.42;
+        margin-top: 8px;
+      }
+
+      .dense-card li {
+        font-size: 21px;
+        line-height: 1.42;
+      }
+
+      .dense-card p {
+        font-size: 21px;
+      }
+
+      .section-label {
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 16px;
+      }
+
+      /* === IMAGE PLACEHOLDERS === */
+      .image-placeholder {
+        position: relative;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border: 1.5px dashed rgba(30, 43, 250, 0.36);
+        border-radius: 18px;
+        background:
+          linear-gradient(135deg, rgba(30, 43, 250, 0.08), rgba(30, 43, 250, 0.015)),
+          rgba(255, 255, 255, 0.46);
+      }
+
+      .image-placeholder::before {
+        content: "";
+        position: absolute;
+        inset: 18px;
+        border-radius: 12px;
+        background:
+          linear-gradient(90deg, transparent 49%, rgba(30, 43, 250, 0.11) 50%, transparent 51%),
+          linear-gradient(0deg, transparent 49%, rgba(30, 43, 250, 0.11) 50%, transparent 51%);
+        background-size: 54px 54px;
+        opacity: 0.45;
+      }
+
+      .image-placeholder .placeholder-copy {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 8px;
+        text-align: center;
+      }
+
+      .image-placeholder .placeholder-title {
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+      }
+
+      .image-placeholder .placeholder-hint {
+        color: var(--text-muted);
+        font-size: 18px;
+      }
+
+      .image-placeholder .placeholder-ratio {
+        position: absolute;
+        right: 18px;
+        bottom: 16px;
+        z-index: 1;
+        color: var(--text-light);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+      }
+
+      .media-frame {
+        position: relative;
+        overflow: hidden;
+        border: 1.5px solid rgba(30, 43, 250, 0.22);
+        border-radius: 18px;
+        background:
+          linear-gradient(135deg, rgba(30, 43, 250, 0.04), rgba(255, 255, 255, 0.78));
+        box-shadow: 0 26px 70px rgba(30, 43, 250, 0.10);
+      }
+
+      .media-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 640ms var(--ease), transform 640ms var(--ease);
+      }
+
+      .visible .reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .reveal.d1 { transition-delay: 90ms; }
+      .reveal.d2 { transition-delay: 170ms; }
+      .reveal.d3 { transition-delay: 250ms; }
+      .reveal.d4 { transition-delay: 330ms; }
+      .reveal.d5 { transition-delay: 410ms; }
+
+      /* === COVER SLIDE === */
+      .cover {
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        align-items: center;
+        gap: 80px;
+        padding-left: 138px;
+      }
+
+      .cover::after {
+        content: "";
+        position: absolute;
+        inset: 0 0 0 auto;
+        width: 670px;
+        background: var(--accent-light);
+        clip-path: polygon(24% 0, 100% 0, 100% 100%, 0 100%);
+      }
+
+      .cover-main {
+        position: relative;
+        z-index: 2;
+        max-width: 980px;
+      }
+
+      .cover h1 {
+        margin-top: 36px;
+      }
+
+      .subtitle {
+        margin-top: 34px;
+        max-width: 810px;
+        color: var(--text-muted);
+        font-size: 32px;
+        line-height: 1.42;
+      }
+
+      .cover-meta {
+        margin-top: 66px;
+        color: var(--text-light);
+        font-size: 19px;
+        letter-spacing: 0.06em;
+      }
+
+      .orbit {
+        position: relative;
+        z-index: 2;
+        width: 470px;
+        height: 470px;
+        border: 2px solid var(--border);
+        border-radius: 50%;
+      }
+
+      .orbit::before,
+      .orbit::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+      }
+
+      .orbit::before {
+        inset: 92px;
+        border: 2px solid var(--border);
+      }
+
+      .orbit::after {
+        width: 74px;
+        height: 74px;
+        top: 72px;
+        right: 44px;
+        background: var(--primary);
+      }
+
+      .orbit-label {
+        position: absolute;
+        left: 96px;
+        top: 196px;
+        width: 280px;
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.18;
+        text-align: center;
+      }
+
+      /* === AGENDA SLIDE === */
+      .agenda-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 26px 70px;
+        margin-top: 54px;
+      }
+
+      .agenda-item {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 24px;
+        align-items: start;
+        border-bottom: 1.5px solid var(--border);
+        padding: 24px 0 28px;
+      }
+
+      .agenda-num {
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 42px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .agenda-item p {
+        margin-top: 9px;
+        font-size: 22px;
+      }
+
+      /* === STATEMENT SLIDE === */
+      .statement {
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+
+      .statement-content {
+        max-width: 1220px;
+      }
+
+      .statement h2 {
+        font-size: 78px;
+        line-height: 1.08;
+      }
+
+      .statement p {
+        margin: 34px auto 0;
+        max-width: 1020px;
+        font-size: 30px;
+      }
+
+      .quote-mark {
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 150px;
+        font-weight: 800;
+        line-height: 0.55;
+        opacity: 0.15;
+      }
+
+      .circle-a,
+      .circle-b {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .circle-a {
+        width: 130px;
+        height: 130px;
+        left: 128px;
+        top: 126px;
+        border: 2px solid var(--border);
+      }
+
+      .circle-b {
+        width: 88px;
+        height: 88px;
+        right: 160px;
+        bottom: 150px;
+        background: var(--accent-light);
+      }
+
+      /* === PRODUCT VISUAL SLIDE === */
+      .product-visual {
+        display: grid;
+        grid-template-columns: 760px 1fr;
+        gap: 68px;
+        align-items: center;
+      }
+
+      .product-visual-copy h2 {
+        font-size: 72px;
+      }
+
+      .product-visual-copy p {
+        margin-top: 30px;
+        font-size: 30px;
+      }
+
+      .product-shot {
+        height: 600px;
+      }
+
+      .timeline-shot {
+        width: 320px;
+        height: 430px;
+        margin: 0 auto;
+      }
+
+      /* === METRICS SLIDE === */
+      .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        margin-top: 62px;
+      }
+
+      .metric-card {
+        min-height: 315px;
+        border: 1.5px solid var(--border);
+        border-radius: 18px;
+        background: var(--card-bg);
+        padding: 34px 36px;
+      }
+
+      .metric-value {
+        color: var(--primary);
+        font-size: 72px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .metric-label {
+        margin-top: 24px;
+        color: var(--text);
+        font-size: 27px;
+        line-height: 1.22;
+        font-weight: 700;
+      }
+
+      .metric-desc {
+        margin-top: 18px;
+        font-size: 21px;
+      }
+
+      /* === PROCESS SLIDE === */
+      .process-track {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 24px;
+        align-items: start;
+        margin-top: 68px;
+      }
+
+      .process-step {
+        position: relative;
+        text-align: center;
+      }
+
+      .process-step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 37px;
+        right: -12px;
+        width: 24px;
+        height: 2px;
+        background: var(--border);
+      }
+
+      .step-circle {
+        display: grid;
+        place-items: center;
+        width: 74px;
+        height: 74px;
+        margin: 0 auto 26px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: var(--bg);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+      }
+
+      .process-step h3 {
+        min-height: 72px;
+      }
+
+      .process-step p {
+        margin: 12px auto 0;
+        max-width: 270px;
+        font-size: 20px;
+      }
+
+      .asset-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 38px;
+      }
+
+      .asset-row .image-placeholder {
+        height: 185px;
+      }
+
+      /* === ARCHITECTURE SLIDE === */
+      .architecture-slide h2 {
+        font-size: 52px;
+      }
+
+      .architecture-frame {
+        margin-top: 30px;
+        height: 710px;
+        border: 1.5px solid var(--border);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.48);
+        overflow: hidden;
+        box-shadow: 0 24px 72px rgba(30, 43, 250, 0.08);
+      }
+
+      .architecture-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .architecture-caption {
+        display: none;
+      }
+
+      /* === LOOP SLIDE === */
+      .loop-layout {
+        display: grid;
+        grid-template-columns: 640px 1fr;
+        gap: 62px;
+        align-items: start;
+        margin-top: 50px;
+      }
+
+      .action-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .action {
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        gap: 20px;
+        align-items: start;
+        border: 1.5px solid var(--border);
+        border-radius: 16px;
+        background: var(--card-bg);
+        padding: 22px 24px;
+      }
+
+      .action-code {
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: var(--bg);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .action p {
+        margin-top: 6px;
+        font-size: 20px;
+      }
+
+      .code-panel {
+        border-radius: 18px;
+        background: #111111;
+        color: #e8ebff;
+        padding: 32px 34px;
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 24px;
+        line-height: 1.48;
+        white-space: pre-wrap;
+      }
+
+      .code-panel .blue {
+        color: #7c8cff;
+      }
+
+      /* === SPLIT SLIDE === */
+      .split-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 70px;
+        margin-top: 54px;
+      }
+
+      .insight-list {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        gap: 28px;
+      }
+
+      .insight-list li {
+        position: relative;
+        padding-left: 74px;
+        color: var(--text);
+        font-size: 28px;
+        line-height: 1.38;
+      }
+
+      .insight-list li::before {
+        content: attr(data-num);
+        position: absolute;
+        left: 0;
+        top: 3px;
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .highlight-box {
+        border-left: 6px solid var(--primary);
+        border-radius: 16px;
+        background: var(--accent-light);
+        padding: 34px 38px;
+      }
+
+      .highlight-box p {
+        color: var(--text);
+        font-size: 32px;
+        line-height: 1.38;
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-weight: 600;
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 28px;
+      }
+
+      .mini-stat {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--card-bg);
+        padding: 22px;
+      }
+
+      .mini-val {
+        color: var(--primary);
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 36px;
+        font-weight: 800;
+      }
+
+      .mini-label {
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 18px;
+      }
+
+      /* === DEMO SLIDE === */
+      .demo-frame {
+        display: grid;
+        grid-template-columns: 430px 1fr 430px;
+        gap: 24px;
+        margin-top: 44px;
+        height: 622px;
+      }
+
+      .mock-panel {
+        border: 1.5px solid var(--border);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.45);
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .mock-panel h3 {
+        color: var(--primary);
+        font-size: 24px;
+        margin-bottom: 22px;
+      }
+
+      .mock-row {
+        height: 48px;
+        border-radius: 10px;
+        background: var(--accent-light);
+        margin-bottom: 14px;
+      }
+
+      .mock-row.short { width: 72%; }
+      .mock-row.mid { width: 86%; }
+      .mock-row.long { width: 100%; }
+
+      .patch-line {
+        height: 28px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        background: rgba(30, 43, 250, 0.07);
+      }
+
+      .patch-line.add { background: rgba(5, 150, 105, 0.14); }
+      .patch-line.del { background: rgba(220, 38, 38, 0.12); }
+
+      .timeline-chip {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 13px;
+        background: var(--card-bg);
+      }
+
+      .timeline-dot {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--primary);
+      }
+
+      .timeline-chip span {
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .screenshot-slot {
+        height: calc(100% - 58px);
+      }
+
+      /* === TABLE SLIDE === */
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-top: 52px;
+      }
+
+      .compare-card {
+        min-height: 430px;
+        border: 1.5px solid var(--border);
+        border-radius: 18px;
+        background: var(--card-bg);
+        padding: 34px 38px;
+      }
+
+      .compare-card h3 {
+        color: var(--primary);
+        margin-bottom: 26px;
+      }
+
+      .compare-card li {
+        font-size: 24px;
+      }
+
+      .compare-card.with-image {
+        display: grid;
+        grid-template-rows: 170px auto;
+        gap: 24px;
+        min-height: 490px;
+      }
+
+      .compare-card.with-image .image-placeholder {
+        min-height: 170px;
+      }
+
+      /* === CLOSING === */
+      .closing {
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+
+      .closing-rings {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+      }
+
+      .ring {
+        position: absolute;
+        border: 1.5px solid var(--border);
+        border-radius: 50%;
+        opacity: 0.55;
+      }
+
+      .ring.r1 { width: 760px; height: 760px; }
+      .ring.r2 { width: 560px; height: 560px; opacity: 0.38; }
+      .ring.r3 { width: 350px; height: 350px; opacity: 0.24; }
+
+      .closing-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1120px;
+      }
+
+      .closing h1 {
+        font-size: 82px;
+      }
+
+      .closing p {
+        margin: 34px auto 0;
+        max-width: 920px;
+        font-size: 30px;
+      }
+
+      .closing-bottom {
+        display: grid;
+        grid-template-columns: 1fr 180px;
+        gap: 32px;
+        align-items: stretch;
+        margin-top: 52px;
+        text-align: left;
+      }
+
+      .qr-placeholder {
+        min-height: 180px;
+        border-radius: 16px;
+      }
+
+      .qr-placeholder .placeholder-title {
+        font-size: 18px;
+      }
+
+      .qr-placeholder .placeholder-hint {
+        font-size: 14px;
+      }
+
+      /* === CONTROLS === */
+      .deck-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(17, 17, 17, 0.74);
+        backdrop-filter: blur(12px);
+      }
+
+      .deck-controls button,
+      .edit-toggle {
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 50%;
+        background: #fdfae7;
+        color: var(--primary);
+        font-size: 20px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .counter {
+        min-width: 74px;
+        color: #fdfae7;
+        font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+        font-size: 15px;
+        text-align: center;
+      }
+
+      .progress {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        height: 4px;
+        width: 0;
+        background: var(--primary);
+        transition: width 360ms var(--ease);
+      }
+
+      /* === INLINE EDITING === */
+      .edit-hotzone {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 10000;
+        width: 90px;
+        height: 90px;
+      }
+
+      .edit-toggle {
+        position: fixed;
+        left: 22px;
+        top: 22px;
+        z-index: 10001;
+        opacity: 0;
+        pointer-events: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        transition: opacity 220ms ease;
+      }
+
+      .edit-toggle.show,
+      .edit-toggle.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.editing [data-editable="true"] {
+        outline: 2px dashed rgba(30, 43, 250, 0.48);
+        outline-offset: 6px;
+        cursor: text;
+      }
+
+      .edit-toast {
+        position: fixed;
+        left: 80px;
+        top: 26px;
+        z-index: 10001;
+        border-radius: 999px;
+        background: rgba(17, 17, 17, 0.82);
+        color: #fff;
+        padding: 12px 18px;
+        font-size: 14px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 200ms ease;
+      }
+
+      .edit-toast.show {
+        opacity: 1;
+      }
+
+      /* === IMAGE ZOOM OVERLAY === */
+      .zoom-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 20000;
+        display: grid;
+        place-items: center;
+        padding: 48px;
+        background: rgba(17, 17, 17, 0.82);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 180ms ease;
+      }
+
+      .zoom-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .zoom-backdrop {
+        position: absolute;
+        inset: 0;
+      }
+
+      .zoom-panel {
+        position: relative;
+        z-index: 1;
+        width: min(92vw, 1600px);
+        max-height: 88vh;
+        border-radius: 22px;
+        overflow: hidden;
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        background: rgba(253, 250, 231, 0.98);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+      }
+
+      .zoom-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        z-index: 2;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(17, 17, 17, 0.82);
+        color: #fff;
+        font-size: 26px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .zoom-content {
+        width: 100%;
+        max-height: 88vh;
+        overflow: auto;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+
+      .zoom-content img {
+        display: block;
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+      }
+
+      .zoom-content .reveal,
+      .zoom-content .visible .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+
+      .zoom-content .image-placeholder,
+      .zoom-content .media-frame,
+      .zoom-content .architecture-frame,
+      .zoom-content .mock-panel,
+      .zoom-content .compare-card {
+        width: min(100%, 1500px);
+        max-width: 1500px;
+      }
+
+      .zoom-content .media-frame {
+        height: auto;
+      }
+
+      .zoom-content .media-frame img {
+        height: auto;
+        max-height: 80vh;
+      }
+
+      .zoom-content .architecture-frame {
+        height: auto;
+        min-height: 70vh;
+      }
+
+      .media-frame,
+      .architecture-frame,
+      .image-placeholder {
+        cursor: zoom-in;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- === FIXED VIEWPORT AND STAGE === -->
+    <div class="deck-viewport">
+      <main class="deck-stage" id="deckStage">
+        <!-- SLIDE 01: COVER -->
+        <section class="slide cover active visible">
+          <div class="cover-main">
+            <div class="accent-line reveal"></div>
+            <p class="eyebrow reveal d1" data-editable="true">AI PR Review Assistant</p>
+            <h1 class="reveal d2" data-editable="true">AI PR Review<br />Assistant</h1>
+            <p class="subtitle reveal d3" data-editable="true">面向 GitHub Pull Request 的 AI 代码评审助手。</p>
+            <p class="subtitle reveal d4" data-editable="true" style="font-size: 28px;">把“读 diff、找风险、写建议”的第一轮 Review，变成可视化、可追踪、可约束的 AI 辅助流程。</p>
+            <p class="cover-meta reveal d5" data-editable="true">React + TypeScript / Node.js / GitHub API / SSE / LLM Review Loop</p>
+          </div>
+          <div class="orbit reveal d3">
+            <div class="orbit-label" data-editable="true">可视化<br />可追踪<br />可约束</div>
+          </div>
+          <div class="slide-num">01 / 12</div>
+          <div class="stage-note">15 min deck</div>
+        </section>
+
+        <!-- SLIDE 02: WHY -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Why</p>
+            <span class="tag" data-editable="true">为什么做</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">PR Review 第一轮成本高、信息碎、容易漏重点</h2>
+          <div class="grid grid-2" style="margin-top: 56px;">
+            <div class="card reveal d2">
+              <h3 data-editable="true">核心痛点</h3>
+              <ol class="compact-list">
+                <li data-editable="true">变更上下文分散，Reviewer 需要先手动筛重点。</li>
+                <li data-editable="true">大 PR 文件多，关键风险容易被淹没。</li>
+                <li data-editable="true">Review 质量依赖个人经验和时间状态。</li>
+              </ol>
+            </div>
+            <div class="card reveal d3">
+              <h3 data-editable="true">AI 直接总结的问题</h3>
+              <ol class="compact-list" start="4">
+                <li data-editable="true">AI 直接总结容易黑盒，缺少依据和过程。</li>
+                <li data-editable="true">有价值的 Review 必须给出风险、原因和建议。</li>
+              </ol>
+            </div>
+          </div>
+          <div class="slide-num">02 / 12</div>
+        </section>
+
+        <!-- SLIDE 03: NEEDS -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Real Needs</p>
+            <span class="tag" data-editable="true">真实需求</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">开发者需要的不是“AI 总结”，而是“可信的 Review 助手”</h2>
+          <div class="metrics-row">
+            <div class="metric-card reveal d2">
+              <div class="metric-value">01</div>
+              <div class="metric-label" data-editable="true">快速理解 PR 范围</div>
+              <p class="metric-desc" data-editable="true">先知道改了什么、影响哪些模块。</p>
+            </div>
+            <div class="metric-card reveal d3">
+              <div class="metric-value">02</div>
+              <div class="metric-label" data-editable="true">优先识别高风险文件</div>
+              <p class="metric-desc" data-editable="true">把注意力放在安全、API、数据和异常路径上。</p>
+            </div>
+            <div class="metric-card reveal d4">
+              <div class="metric-value">03</div>
+              <div class="metric-label" data-editable="true">过程可追踪、可复核</div>
+              <p class="metric-desc" data-editable="true">每个风险要有 diff 依据，建议能转成 Review comment。</p>
+            </div>
+          </div>
+          <div class="slide-num">03 / 12</div>
+        </section>
+
+        <!-- SLIDE 04: SOLUTION -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Solution</p>
+            <span class="tag" data-editable="true">解决思路</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">把 AI Review 从“一次性回答”改成“受控流程”</h2>
+          <div class="grid grid-2" style="margin-top: 56px;">
+            <div class="card reveal d2">
+              <h3 data-editable="true">为什么这样设计</h3>
+              <ol class="compact-list">
+                <li data-editable="true">不是直接让模型总结整个 PR。</li>
+                <li data-editable="true">而是拆成可追踪的多个步骤。</li>
+                <li data-editable="true">模型负责分析，系统负责上下文、状态和约束。</li>
+              </ol>
+            </div>
+            <div class="card reveal d3">
+              <h3 data-editable="true">想达到的效果</h3>
+              <ol class="compact-list">
+                <li data-editable="true">每一步都能展示给用户。</li>
+                <li data-editable="true">每一步都能被后端校验。</li>
+                <li data-editable="true">目标不是更像聊天，而是更像真实 Review 过程。</li>
+              </ol>
+            </div>
+          </div>
+          <div class="highlight-box reveal d4" style="margin-top: 34px;">
+            <p data-editable="true">核心原则：可视化、可追踪、可复核、可约束。</p>
+          </div>
+          <div class="slide-num">04 / 12</div>
+        </section>
+
+        <!-- SLIDE 05: PRODUCT -->
+        <section class="slide product-visual">
+          <div class="product-visual-copy">
+            <p class="eyebrow reveal d1" data-editable="true">Product Demo</p>
+            <div class="accent-line reveal"></div>
+            <h2 class="reveal d2" data-editable="true">一个 PR URL 触发完整 Review 工作台</h2>
+            <ul class="compact-list reveal d3" style="margin-top: 32px;">
+              <li data-editable="true"><strong>左侧：</strong>Pull Request 信息、分支、状态、增删行、文件列表。</li>
+              <li data-editable="true"><strong>中间：</strong>Diff Viewer，按文件查看真实 patch。</li>
+              <li data-editable="true"><strong>右侧：</strong>Pipeline、Agent Timeline、风险和建议。</li>
+            </ul>
+          </div>
+          <div class="media-frame product-shot reveal d3" data-zoomable="true" data-zoom-title="产品主界面截图">
+            <img src="assets/product-screenshot.png" alt="AI PR Review Assistant 产品主界面截图" />
+          </div>
+          <div class="slide-num">05 / 12</div>
+        </section>
+
+        <!-- SLIDE 06: TIMELINE -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">AI Review Timeline</p>
+            <span class="tag" data-editable="true">过程可见</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">让 AI 的判断过程可见</h2>
+          <div class="loop-layout">
+            <div class="action-list">
+              <div class="action reveal d2"><div class="action-code">IF</div><div><h3 data-editable="true">inspect_files</h3><p data-editable="true">选择要检查的文件，并说明原因。</p></div></div>
+              <div class="action reveal d3"><div class="action-code">RR</div><div><h3 data-editable="true">record_risk</h3><p data-editable="true">记录风险、等级、类型和依据。</p></div></div>
+              <div class="action reveal d4"><div class="action-code">RS</div><div><h3 data-editable="true">record_suggestion</h3><p data-editable="true">为已有风险生成建议。</p></div></div>
+              <div class="action reveal d5"><div class="action-code">FN</div><div><h3 data-editable="true">finish</h3><p data-editable="true">输出总结和整体风险等级。</p></div></div>
+            </div>
+            <div>
+              <div class="media-frame timeline-shot reveal d3" data-zoomable="true" data-zoom-title="Agent Timeline 截图">
+                <img src="assets/agent-timeline.png" alt="AI Review Agent Timeline 截图" />
+              </div>
+              <div class="highlight-box reveal d4" style="margin-top: 24px;">
+                <p data-editable="true">Reviewer 能看到 AI 看了什么、为什么看、如何得出结论。</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide-num">06 / 12</div>
+        </section>
+
+        <!-- SLIDE 07: ARCHITECTURE -->
+        <section class="slide architecture-slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Architecture</p>
+            <span class="tag" data-editable="true">系统架构</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">从 PR URL 到 AI Review 的完整链路</h2>
+          <div class="architecture-frame reveal d2" data-zoomable="true" data-zoom-title="系统架构图">
+            <img src="assets/architecture-diagram.svg" alt="AI PR Review Assistant 系统架构图" />
+          </div>
+          <div class="slide-num">07 / 12</div>
+        </section>
+
+        <!-- SLIDE 08: ENGINEERING -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Engineering</p>
+            <span class="tag" data-editable="true">工程实现</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">把设计思路落到具体系统</h2>
+          <div class="grid grid-2" style="margin-top: 56px;">
+            <div class="card reveal d2">
+              <h3 data-editable="true">核心实现</h3>
+              <ol class="compact-list">
+                <li data-editable="true">PR URL 解析：提取 owner / repo / pullNumber。</li>
+                <li data-editable="true">GitHub 数据获取：metadata、changed files 和 patch。</li>
+                <li data-editable="true">Review Context 构建：整理 PR 信息、文件 diff、统计和 warning。</li>
+              </ol>
+            </div>
+            <div class="card reveal d3">
+              <h3 data-editable="true">系统落地</h3>
+              <ol class="compact-list">
+                <li data-editable="true">Review Pipeline 编排：串起 context、loop、result 和状态流转。</li>
+                <li data-editable="true">SSE 流式反馈：把阶段、动作和结果实时推到前端。</li>
+                <li data-editable="true">前端工作台：统一展示 PR、Diff、Timeline、风险和建议。</li>
+              </ol>
+            </div>
+          </div>
+          <div class="slide-num">08 / 12</div>
+        </section>
+
+        <!-- SLIDE 09: CONTEXT -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Core Design</p>
+            <span class="tag" data-editable="true">上下文构建</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">先治理输入，再交给模型</h2>
+          <div class="comparison">
+            <div class="compare-card dense-card reveal d2">
+              <h3 data-editable="true">Context 包含</h3>
+              <ol class="compact-list">
+                <li data-editable="true">PR 标题、描述、作者、分支、状态。</li>
+                <li data-editable="true">文件名、状态、增删行、patch。</li>
+                <li data-editable="true">totalFiles、includedFiles、ignoredFiles、largeChange。</li>
+                <li data-editable="true">truncated / ignored / warning 标记。</li>
+              </ol>
+            </div>
+            <div class="compare-card dense-card reveal d3">
+              <h3 data-editable="true">上下文策略</h3>
+              <ol class="compact-list">
+                <li data-editable="true">过滤 lock、dist、build、minified 文件。</li>
+                <li data-editable="true">单文件 patch 超长截断。</li>
+                <li data-editable="true">大 PR 标记 warning，优先做风险文件筛选。</li>
+              </ol>
+              <p style="margin-top: 24px;" data-editable="true">目标：减少噪音、控制 token、保留关键证据。</p>
+            </div>
+          </div>
+          <div class="slide-num">09 / 12</div>
+        </section>
+
+        <!-- SLIDE 10: REVIEW LOOP -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Core Design</p>
+            <span class="tag" data-editable="true">受控 Review Loop</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">每轮只允许模型输出一个 JSON action</h2>
+          <div class="loop-layout">
+            <div class="code-panel reveal d2" data-editable="true">{
+  <span class="blue">"type"</span>: "record_risk",
+  <span class="blue">"risk"</span>: {
+    <span class="blue">"file"</span>: "server/src/review/runReviewLoop.ts",
+    <span class="blue">"level"</span>: "medium",
+    <span class="blue">"title"</span>: "模型输出解析失败会中断评审",
+    <span class="blue">"reason"</span>: "parseReviewLoopAction 抛错后缺少恢复策略"
+  }
+}</div>
+            <div>
+              <div class="action-list">
+                <div class="action reveal d2"><div class="action-code">1</div><div><h3 data-editable="true">inspect_files</h3><p data-editable="true">选择文件。</p></div></div>
+                <div class="action reveal d3"><div class="action-code">2</div><div><h3 data-editable="true">record_risk</h3><p data-editable="true">记录风险。</p></div></div>
+                <div class="action reveal d4"><div class="action-code">3</div><div><h3 data-editable="true">record_suggestion</h3><p data-editable="true">生成建议。</p></div></div>
+                <div class="action reveal d5"><div class="action-code">4</div><div><h3 data-editable="true">finish</h3><p data-editable="true">结束评审。</p></div></div>
+              </div>
+              <div class="highlight-box reveal d5" style="margin-top: 22px;">
+                <p data-editable="true">价值：把一次黑盒回答拆成多个可验证步骤。</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide-num">10 / 12</div>
+        </section>
+
+        <!-- SLIDE 11: ACCURACY -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Accuracy</p>
+            <span class="tag" data-editable="true">误报漏报控制</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">准确性不只靠 prompt，而是靠系统约束</h2>
+          <div class="comparison">
+            <div class="compare-card dense-card reveal d2">
+              <h3 data-editable="true">降低误报</h3>
+              <ol class="compact-list">
+                <li data-editable="true">风险必须来自已 inspect 文件。</li>
+                <li data-editable="true">风险必须由 diff 支撑。</li>
+                <li data-editable="true">suggestion 必须绑定已有 risk。</li>
+                <li data-editable="true">忽略低价值文件，减少噪音。</li>
+              </ol>
+            </div>
+            <div class="compare-card dense-card reveal d3">
+              <h3 data-editable="true">降低漏报</h3>
+              <ol class="compact-list">
+                <li data-editable="true">小 PR 尽量检查全部文件。</li>
+                <li data-editable="true">大 PR 优先检查高风险文件。</li>
+                <li data-editable="true">关注安全、鉴权、API 边界、数据模型、异常处理、删除逻辑。</li>
+                <li data-editable="true">0 风险结束前触发二次复查。</li>
+                <li data-editable="true">有风险无建议时强制补充建议。</li>
+              </ol>
+            </div>
+          </div>
+          <div class="grid grid-3" style="margin-top: 26px;">
+            <div class="card small reveal d3"><h3 data-editable="true">10 轮</h3><p data-editable="true">最大 Review 轮数</p></div>
+            <div class="card small reveal d4"><h3 data-editable="true">6 + 6</h3><p data-editable="true">最多风险和建议</p></div>
+            <div class="card small reveal d5"><h3 data-editable="true">7 文件</h3><p data-editable="true">单轮检查上限</p></div>
+          </div>
+          <div class="slide-num">11 / 12</div>
+        </section>
+
+        <!-- SLIDE 12: SUMMARY -->
+        <section class="slide">
+          <div class="slide-header">
+            <p class="eyebrow" data-editable="true">Summary</p>
+            <span class="tag" data-editable="true">总结与未来扩展</span>
+          </div>
+          <div class="accent-line reveal"></div>
+          <h2 class="reveal d1" data-editable="true">AI 不替代工程师判断，而是帮助工程师更快找到需要判断的地方</h2>
+          <div class="comparison">
+            <div class="compare-card dense-card reveal d2">
+              <h3 data-editable="true">当前已实现</h3>
+              <ol class="compact-list">
+                <li data-editable="true">GitHub PR URL 解析。</li>
+                <li data-editable="true">PR 元数据与 patch 获取。</li>
+                <li data-editable="true">Review Context 构建。</li>
+                <li data-editable="true">多轮 AI Review Loop。</li>
+                <li data-editable="true">SSE 实时 Timeline。</li>
+                <li data-editable="true">风险识别与 Review 建议生成。</li>
+              </ol>
+            </div>
+            <div class="compare-card dense-card reveal d3">
+              <h3 data-editable="true">未来扩展</h3>
+              <ol class="compact-list">
+                <li data-editable="true">行级 GitHub 评论写回。</li>
+                <li data-editable="true">Follow-up Chat。</li>
+                <li data-editable="true">仓库代码索引与跨文件上下文。</li>
+                <li data-editable="true">CI / 测试 / 覆盖率接入。</li>
+                <li data-editable="true">团队 Review Policy。</li>
+                <li data-editable="true">按 PR 大小和风险类型路由模型。</li>
+              </ol>
+            </div>
+          </div>
+          <div class="slide-num">12 / 12</div>
+        </section>
+      </main>
+    </div>
+
+    <!-- === OUTSIDE-STAGE CONTROLS === -->
+    <div class="deck-controls" aria-label="Slide controls">
+      <button id="prevBtn" type="button" aria-label="Previous slide">‹</button>
+      <div class="counter" id="counter">1 / 12</div>
+      <button id="nextBtn" type="button" aria-label="Next slide">›</button>
+    </div>
+    <div class="progress" id="progress"></div>
+
+    <div class="zoom-overlay" id="zoomOverlay" aria-hidden="true">
+      <div class="zoom-backdrop" id="zoomBackdrop"></div>
+      <div class="zoom-panel" role="dialog" aria-modal="true" aria-label="Image preview">
+        <button class="zoom-close" id="zoomClose" type="button" aria-label="Close preview">×</button>
+        <div class="zoom-content" id="zoomContent"></div>
+      </div>
+    </div>
+
+    <!-- === INLINE EDITING CONTROLS === -->
+    <div class="edit-hotzone" id="editHotzone"></div>
+    <button class="edit-toggle" id="editToggle" type="button" title="Edit mode (E)">E</button>
+    <div class="edit-toast" id="editToast">编辑模式：点击文字修改，Ctrl+S 保存到本地</div>
+
+    <script>
+      /* === SLIDE PRESENTATION CONTROLLER === */
+      class SlidePresentation {
+        constructor() {
+          this.slides = Array.from(document.querySelectorAll(".slide"));
+          this.stage = document.getElementById("deckStage");
+          this.currentSlide = 0;
+          this.counter = document.getElementById("counter");
+          this.progress = document.getElementById("progress");
+          this.prevBtn = document.getElementById("prevBtn");
+          this.nextBtn = document.getElementById("nextBtn");
+          this.touchStartX = 0;
+          this.wheelLocked = false;
+          this.initialSlide = this.getInitialSlideIndex();
+
+          this.setupStageScale();
+          this.setupNavigation();
+          this.showSlide(this.initialSlide);
+        }
+
+        getInitialSlideIndex() {
+          const params = new URLSearchParams(window.location.search);
+          const requested = Number(params.get("slide"));
+          if (!Number.isInteger(requested)) {
+            return 0;
+          }
+          return Math.max(0, Math.min(requested - 1, this.slides.length - 1));
+        }
+
+        setupStageScale() {
+          const scale = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+          };
+
+          scale();
+          window.addEventListener("resize", scale);
+        }
+
+        setupNavigation() {
+          this.prevBtn.addEventListener("click", () => this.go(-1));
+          this.nextBtn.addEventListener("click", () => this.go(1));
+
+          document.addEventListener("keydown", (event) => {
+            if (document.body.classList.contains("editing") && event.target.isContentEditable) {
+              return;
+            }
+
+            if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+              event.preventDefault();
+              this.go(1);
+            }
+
+            if (["ArrowLeft", "PageUp"].includes(event.key)) {
+              event.preventDefault();
+              this.go(-1);
+            }
+
+            if (event.key === "Home") {
+              this.showSlide(0);
+            }
+
+            if (event.key === "End") {
+              this.showSlide(this.slides.length - 1);
+            }
+          });
+
+          window.addEventListener("wheel", (event) => {
+            if (this.wheelLocked || Math.abs(event.deltaY) < 30) {
+              return;
+            }
+
+            this.wheelLocked = true;
+            this.go(event.deltaY > 0 ? 1 : -1);
+            window.setTimeout(() => {
+              this.wheelLocked = false;
+            }, 520);
+          }, { passive: true });
+
+          window.addEventListener("touchstart", (event) => {
+            this.touchStartX = event.touches[0].clientX;
+          }, { passive: true });
+
+          window.addEventListener("touchend", (event) => {
+            const delta = event.changedTouches[0].clientX - this.touchStartX;
+            if (Math.abs(delta) > 50) {
+              this.go(delta < 0 ? 1 : -1);
+            }
+          }, { passive: true });
+        }
+
+        go(delta) {
+          this.showSlide(this.currentSlide + delta);
+        }
+
+        showSlide(index) {
+          this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+          window.__imageZoomOverlay?.close();
+
+          this.slides.forEach((slide, slideIndex) => {
+            const active = slideIndex === this.currentSlide;
+            slide.classList.toggle("active", active);
+            slide.classList.toggle("visible", active);
+          });
+
+          this.counter.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+          this.progress.style.width = `${((this.currentSlide + 1) / this.slides.length) * 100}%`;
+          this.prevBtn.disabled = this.currentSlide === 0;
+          this.nextBtn.disabled = this.currentSlide === this.slides.length - 1;
+        }
+      }
+
+      /* === IMAGE ZOOM OVERLAY === */
+      class ImageZoomOverlay {
+        constructor() {
+          this.overlay = document.getElementById("zoomOverlay");
+          this.backdrop = document.getElementById("zoomBackdrop");
+          this.closeBtn = document.getElementById("zoomClose");
+          this.content = document.getElementById("zoomContent");
+          this.openTarget = null;
+
+          this.bindEvents();
+        }
+
+        bindEvents() {
+          document.addEventListener("click", (event) => {
+            if (document.body.classList.contains("editing")) {
+              return;
+            }
+
+            const target = event.target instanceof Element
+              ? event.target.closest('[data-zoomable="true"]')
+              : null;
+
+            if (!target) {
+              return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            this.open(target);
+          });
+
+          this.backdrop.addEventListener("click", () => this.close());
+          this.closeBtn.addEventListener("click", () => this.close());
+
+          document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && this.isOpen()) {
+              this.close();
+            }
+          });
+        }
+
+        isOpen() {
+          return this.overlay.classList.contains("open");
+        }
+
+        open(target) {
+          this.content.innerHTML = "";
+          const clone = target.cloneNode(true);
+          clone.removeAttribute("data-zoomable");
+          clone.classList.add("zoomed-clone");
+          clone.classList.remove("reveal", "visible");
+
+          if (clone instanceof HTMLElement) {
+            clone.querySelectorAll(".reveal, .visible").forEach((node) => {
+              node.classList.remove("reveal", "visible", "d1", "d2", "d3", "d4", "d5");
+              if (node instanceof HTMLElement) {
+                node.style.opacity = "1";
+                node.style.transform = "none";
+                node.style.transition = "none";
+              }
+            });
+          }
+
+          if (clone instanceof HTMLElement) {
+            if (target instanceof HTMLElement && target.dataset.zoomTitle) {
+              clone.dataset.zoomTitle = target.dataset.zoomTitle;
+            }
+            clone.style.cursor = "default";
+          }
+
+          this.content.appendChild(clone);
+          this.overlay.classList.add("open");
+          this.overlay.setAttribute("aria-hidden", "false");
+          this.openTarget = target;
+        }
+
+        close() {
+          if (!this.isOpen()) {
+            return;
+          }
+
+          this.overlay.classList.remove("open");
+          this.overlay.setAttribute("aria-hidden", "true");
+          this.content.innerHTML = "";
+          this.openTarget = null;
+        }
+      }
+
+      /* === INLINE EDITOR === */
+      class InlineEditor {
+        constructor() {
+          this.toggle = document.getElementById("editToggle");
+          this.hotzone = document.getElementById("editHotzone");
+          this.toast = document.getElementById("editToast");
+          this.timeout = null;
+          this.storageKey = "ai-pr-review-assistant-roadshow-edits-v2";
+
+          this.setupHover();
+          this.setupToggle();
+          this.restore();
+        }
+
+        setupHover() {
+          const show = () => {
+            window.clearTimeout(this.timeout);
+            this.toggle.classList.add("show");
+          };
+
+          const hide = () => {
+            this.timeout = window.setTimeout(() => {
+              if (!this.toggle.classList.contains("active")) {
+                this.toggle.classList.remove("show");
+              }
+            }, 400);
+          };
+
+          this.hotzone.addEventListener("mouseenter", show);
+          this.hotzone.addEventListener("mouseleave", hide);
+          this.toggle.addEventListener("mouseenter", show);
+          this.toggle.addEventListener("mouseleave", hide);
+        }
+
+        setupToggle() {
+          this.toggle.addEventListener("click", () => this.toggleEditMode());
+
+          document.addEventListener("keydown", (event) => {
+            if (event.key.toLowerCase() === "e" && !event.ctrlKey && !event.metaKey && !event.target.isContentEditable) {
+              this.toggleEditMode();
+            }
+
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+              event.preventDefault();
+              this.save();
+            }
+          });
+        }
+
+        toggleEditMode() {
+          const editing = document.body.classList.toggle("editing");
+          this.toggle.classList.toggle("active", editing);
+          this.toggle.classList.add("show");
+          document.querySelectorAll("[data-editable='true']").forEach((element) => {
+            element.contentEditable = editing ? "true" : "false";
+          });
+          this.toast.textContent = editing ? "编辑模式：点击文字修改，Ctrl+S 保存到本地" : "已退出编辑模式";
+          this.toast.classList.add("show");
+          window.setTimeout(() => this.toast.classList.remove("show"), 1800);
+        }
+
+        save() {
+          const edits = Array.from(document.querySelectorAll("[data-editable='true']")).map((element) => element.innerHTML);
+          window.localStorage.setItem(this.storageKey, JSON.stringify(edits));
+          this.toast.textContent = "已保存到当前浏览器";
+          this.toast.classList.add("show");
+          window.setTimeout(() => this.toast.classList.remove("show"), 1600);
+        }
+
+        restore() {
+          const raw = window.localStorage.getItem(this.storageKey);
+          if (!raw) {
+            return;
+          }
+
+          try {
+            const edits = JSON.parse(raw);
+            document.querySelectorAll("[data-editable='true']").forEach((element, index) => {
+              if (typeof edits[index] === "string") {
+                element.innerHTML = edits[index];
+              }
+            });
+          } catch {
+            window.localStorage.removeItem(this.storageKey);
+          }
+        }
+      }
+
+      window.__imageZoomOverlay = new ImageZoomOverlay();
+      new SlidePresentation();
+      new InlineEditor();
+    </script>
+  </body>
+</html>
